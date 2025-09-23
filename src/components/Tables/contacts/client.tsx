@@ -491,9 +491,6 @@ function StatusDropdown({
                   )}
                 >
                   <span>{option}</span>
-                  {option === status && (
-                    <span className="text-xs uppercase tracking-wide">Đang dùng</span>
-                  )}
                 </button>
               </DropdownClose>
             </li>
