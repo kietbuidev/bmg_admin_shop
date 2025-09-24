@@ -1,12 +1,16 @@
 import { CheckIcon, XIcon } from "@/assets/icons";
 import { cn } from "@/lib/utils";
-import { useId } from "react";
+import { useId, type ChangeEvent } from "react";
 
 type PropsType = {
   withIcon?: boolean;
   background?: "dark" | "light";
   backgroundSize?: "sm" | "default";
   name?: string;
+  defaultChecked?: boolean;
+  checked?: boolean;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
 };
 
 export function Switch({
@@ -14,6 +18,10 @@ export function Switch({
   withIcon,
   backgroundSize,
   name,
+  defaultChecked,
+  checked,
+  onChange,
+  disabled,
 }: PropsType) {
   const id = useId();
 
@@ -23,7 +31,16 @@ export function Switch({
       className="flex max-w-fit cursor-pointer select-none items-center"
     >
       <div className="relative">
-        <input type="checkbox" name={name} id={id} className="peer sr-only" />
+        <input
+          type="checkbox"
+          name={name}
+          id={id}
+          className="peer sr-only"
+          defaultChecked={defaultChecked}
+          checked={checked}
+          onChange={onChange}
+          disabled={disabled}
+        />
         <div
           className={cn("h-8 w-14 rounded-full bg-gray-3 dark:bg-[#5A616B]", {
             "h-5": backgroundSize === "sm",
