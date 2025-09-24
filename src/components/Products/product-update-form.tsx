@@ -294,10 +294,6 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
           Thông tin cơ bản
         </h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <ProductCategorySelect
-            required
-            defaultValue={product.category_id}
-          />
           <InputGroup
             label="Tên sản phẩm"
             name="name"
@@ -305,6 +301,10 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
             type="text"
             required
             defaultValue={product.name}
+          />
+          <ProductCategorySelect
+            required
+            defaultValue={product.category_id}
           />
           <InputGroup
             label="Mã sản phẩm"

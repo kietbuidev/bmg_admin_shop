@@ -80,6 +80,20 @@ export const NAV_DATA = [
         ],
       },
       {
+        title: "Posts",
+        icon: Icons.Document,
+        items: [
+          {
+            title: "Danh sách",
+            url: "/posts/list",
+          },
+          {
+            title: "Tạo mới",
+            url: "/posts/create",
+          },
+        ],
+      },
+      {
         title: "Contacts",
         url: "/contacts",
         icon: Icons.Mail,

@@ -233,3 +233,23 @@ export function Box(props: PropsType) {
     </svg>
   );
 }
+
+export function Document(props: PropsType) {
+  return (
+    <svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8.25 1.75h4.94c.58 0 1.137.231 1.548.642l5.87 5.87a2.189 2.189 0 01.642 1.548v8.94a3.5 3.5 0 01-3.5 3.5h-9.5a3.5 3.5 0 01-3.5-3.5v-12.5a3.5 3.5 0 013.5-3.5zm-.25 1.5A2 2 0 006 5.25v12.5a2 2 0 002 2h9.5a2 2 0 002-2V9.06a.69.69 0 00-.202-.488l-5.87-5.87a.69.69 0 00-.488-.202H8z"
+      />
+      <path d="M13.25 2.5V6a2 2 0 002 2h3.5v-1.5h-3a.5.5 0 01-.5-.5v-3H13.25z" />
+      <path d="M8.75 12.25a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zM8.75 16.25a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z" />
+    </svg>
+  );
+}
