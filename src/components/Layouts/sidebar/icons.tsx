@@ -201,3 +201,21 @@ export function ArrowLeftIcon(props: PropsType) {
     </svg>
   );
 }
+
+
+export function Category(props: PropsType) {
+  return (
+    <svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
+      <rect x={3.25} y={3.25} width={6.5} height={6.5} rx={1.25} />
+      <rect x={14.25} y={3.25} width={6.5} height={6.5} rx={1.25} />
+      <rect x={3.25} y={14.25} width={6.5} height={6.5} rx={1.25} />
+      <rect x={14.25} y={14.25} width={6.5} height={6.5} rx={1.25} />
+    </svg>
+  );
+}

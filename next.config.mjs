@@ -22,14 +22,30 @@ const nextConfig = {
         hostname: "pub-b7fd9c30cdbf439183b75041f5f71b92.r2.dev",
         port: "",
       },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "drive.google.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+        pathname: "/**",
+      },
     ],
   },
   reactStrictMode: true,
-    experimental: {
-    serverActions: { allowedOrigins: ['your-domain.com', '*.vercel.app'] }
-  }
+  experimental: {
+    serverActions: { allowedOrigins: ["your-domain.com", "*.vercel.app"] },
+  },
 };
 
 export default nextConfig;

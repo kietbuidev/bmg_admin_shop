@@ -52,6 +52,20 @@ export const NAV_DATA = [
         ],
       },
       {
+        title: "Categories",
+        icon: Icons.Category,
+        items: [
+          {
+            title: "Danh sách",
+            url: "/categories/list",
+          },
+          {
+            title: "Tạo mới",
+            url: "/categories/create",
+          },
+        ],
+      },
+      {
         title: "Contacts",
         url: "/contacts",
         icon: Icons.Mail,

@@ -110,6 +110,23 @@ export function DotIcon(props: IconProps) {
   );
 }
 
+export function DotsVerticalIcon(props: IconProps) {
+  return (
+    <svg
+      width={4}
+      height={16}
+      viewBox="0 0 4 16"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <circle cx={2} cy={2} r={2} />
+      <circle cx={2} cy={8} r={2} />
+      <circle cx={2} cy={14} r={2} />
+    </svg>
+  );
+}
+
 export function TrendingUpIcon(props: IconProps) {
   return (
     <svg
