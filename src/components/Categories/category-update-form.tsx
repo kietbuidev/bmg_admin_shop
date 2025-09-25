@@ -11,6 +11,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
 import { updateCategory } from "./fetch";
+import { CategoryParentSelect } from "./category-parent-select";
 import { UploadResult, fromExistingLink, uploadImage } from "./media";
 import { CategoryFormValues, CategoryRecord } from "./types";
 
@@ -41,6 +42,13 @@ function applyInitialValues(
     | null;
   if (priorityInput) {
     priorityInput.value = String(category.priority ?? 0);
+  }
+
+  const parentSelect = form.elements.namedItem("parent_id") as
+    | HTMLSelectElement
+    | null;
+  if (parentSelect) {
+    parentSelect.value = category.parent_id ?? "";
   }
 
   const activeInput = form.elements.namedItem("is_active") as
@@ -172,10 +180,12 @@ export function CategoryUpdateForm({ category }: CategoryUpdateFormProps) {
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
 
+    const parentId = getValue("parent_id");
+
     const payload: CategoryFormValues = {
       name: getValue("name"),
       description: getValue("description"),
-      parent_id: null,
+      parent_id: parentId || null,
       thumbnail: thumbnailFile?.storedUrl ?? null,
       gallery: galleryFiles.map((file) => file.storedUrl),
       is_active: formData.get("is_active") !== null,
@@ -285,6 +295,13 @@ export function CategoryUpdateForm({ category }: CategoryUpdateFormProps) {
               type="text"
               required
               defaultValue={category.name}
+            />
+            <CategoryParentSelect
+              key={category.id}
+              defaultValue={category.parent_id}
+              excludeId={category.id}
+              label="Danh mục cha"
+              name="parent_id"
             />
 
             <div className="space-y-3">

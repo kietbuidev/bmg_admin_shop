@@ -10,6 +10,7 @@ import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
 import { createCategory } from "./fetch";
+import { CategoryParentSelect } from "./category-parent-select";
 import { CategoryFormValues } from "./types";
 import { UploadResult, uploadImage } from "./media";
 
@@ -21,6 +22,13 @@ function applyDefaults(form: HTMLFormElement | null) {
     | null;
   if (priorityInput) {
     priorityInput.value = "1";
+  }
+
+  const parentSelect = form.elements.namedItem("parent_id") as
+    | HTMLSelectElement
+    | null;
+  if (parentSelect) {
+    parentSelect.value = "";
   }
 
   const activeInput = form.elements.namedItem("is_active") as
@@ -135,10 +143,12 @@ export function CategoryCreateForm() {
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
 
+    const parentId = getValue("parent_id");
+
     const payload: CategoryFormValues = {
       name: getValue("name"),
       description: getValue("description"),
-      parent_id: null,
+      parent_id: parentId || null,
       thumbnail: thumbnailFile?.storedUrl ?? null,
       gallery: galleryFiles.map((item) => item.storedUrl),
       is_active: formData.get("is_active") !== null,
@@ -236,6 +246,7 @@ export function CategoryCreateForm() {
               type="text"
               required
             />
+            <CategoryParentSelect label="Danh mục cha" name="parent_id" />
             <p className="text-sm text-dark-6 dark:text-dark-6">
               Slug sẽ được tạo tự động dựa trên tên danh mục.
             </p>
