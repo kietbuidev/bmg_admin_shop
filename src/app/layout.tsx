@@ -1,4 +1,3 @@
-import "@/css/satoshi.css";
 import "@/css/style.css";
 
 import { Sidebar } from "@/components/Layouts/sidebar";
@@ -8,9 +7,26 @@ import "jsvectormap/dist/jsvectormap.css";
 
 import { Header } from "@/components/Layouts/header";
 import type { Metadata } from "next";
+import { Nunito } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import type { PropsWithChildren } from "react";
 import { Providers } from "./providers";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  display: "swap",
+  weight: [
+    "200",
+    "300",
+    "400",
+    "500",
+    "600",
+    "700",
+    "800",
+    "900",
+  ],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -23,8 +39,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={nunito.variable}
+    >
+      <body className="font-sans">
         <Providers>
           <NextTopLoader color="#5750F1" showSpinner={false} />
 
