@@ -154,6 +154,8 @@ export function CategoryCreateForm() {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
+      material: getValue("material") || null,
+      style: getValue("style") || null,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -247,6 +249,20 @@ export function CategoryCreateForm() {
               required
             />
             <CategoryParentSelect label="Danh mục cha" name="parent_id" />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <InputGroup
+                label="Chất liệu"
+                name="material"
+                placeholder="Ví dụ: Linen Blend"
+                type="text"
+              />
+              <InputGroup
+                label="Phong cách"
+                name="style"
+                placeholder="Ví dụ: Summer"
+                type="text"
+              />
+            </div>
             <p className="text-sm text-dark-6 dark:text-dark-6">
               Slug sẽ được tạo tự động dựa trên tên danh mục.
             </p>

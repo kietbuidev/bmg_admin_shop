@@ -51,6 +51,20 @@ function applyInitialValues(
     parentSelect.value = category.parent_id ?? "";
   }
 
+  const materialInput = form.elements.namedItem("material") as
+    | HTMLInputElement
+    | null;
+  if (materialInput) {
+    materialInput.value = category.material ?? "";
+  }
+
+  const styleInput = form.elements.namedItem("style") as
+    | HTMLInputElement
+    | null;
+  if (styleInput) {
+    styleInput.value = category.style ?? "";
+  }
+
   const activeInput = form.elements.namedItem("is_active") as
     | HTMLInputElement
     | null;
@@ -191,6 +205,8 @@ export function CategoryUpdateForm({ category }: CategoryUpdateFormProps) {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
+      material: getValue("material") || null,
+      style: getValue("style") || null,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -303,6 +319,22 @@ export function CategoryUpdateForm({ category }: CategoryUpdateFormProps) {
               label="Danh mục cha"
               name="parent_id"
             />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <InputGroup
+                label="Chất liệu"
+                name="material"
+                placeholder="Ví dụ: Linen Blend"
+                type="text"
+                defaultValue={category.material ?? ""}
+              />
+              <InputGroup
+                label="Phong cách"
+                name="style"
+                placeholder="Ví dụ: Summer"
+                type="text"
+                defaultValue={category.style ?? ""}
+              />
+            </div>
 
             <div className="space-y-3">
               <label className="text-body-sm font-medium text-dark dark:text-white">

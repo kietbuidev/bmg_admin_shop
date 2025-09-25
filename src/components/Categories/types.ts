@@ -9,6 +9,8 @@ export type CategoryRecord = {
   is_active: boolean;
   is_popular: boolean;
   priority: number | string | any;
+  material: string | null;
+  style: string | null;
   meta_title: string;
   meta_keyword: string;
   meta_description: string;
