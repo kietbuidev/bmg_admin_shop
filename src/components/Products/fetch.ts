@@ -155,6 +155,7 @@ function normalizeProductRecord(record: unknown): ProductRecord {
     is_active: toBoolean(raw.is_active),
     is_popular: toBoolean(raw.is_popular),
     priority: toNumber(raw.priority, 0),
+    status: toNullableString(raw.status),
     meta_title: toStringValue(raw.meta_title),
     meta_keyword: toStringValue(raw.meta_keyword),
     meta_description: toStringValue(raw.meta_description),
@@ -339,6 +340,7 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
   const regular = Number.parseFloat(payload.regular_price || "0");
   const sale = Number.parseFloat(payload.sale_price || "0");
   let percent: string | null = payload.percent;
+  const status = payload.status?.trim() ? payload.status.trim() : null;
 
   if (!percent && sale > 0 && regular > 0) {
     percent = (((regular - sale) / regular) * 100).toFixed(2);
@@ -346,6 +348,7 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
 
   return {
     ...payload,
+    status,
     percent,
   };
 }

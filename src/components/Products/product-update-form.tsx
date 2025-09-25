@@ -64,6 +64,12 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       Boolean(product.is_active);
     (form.elements.namedItem("is_popular") as HTMLInputElement | null)!.checked =
       Boolean(product.is_popular);
+    const statusInput = form.elements.namedItem("status") as
+      | HTMLInputElement
+      | null;
+    if (statusInput) {
+      statusInput.value = product.status ?? "";
+    }
     setRegularPrice(product.regular_price);
     setSalePrice(product.sale_price ?? "");
   }, [product]);
@@ -185,6 +191,7 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
+      status: getValue("status") || null,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -241,6 +248,12 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       setColors(record.colors);
       setRegularPrice(record.regular_price);
       setSalePrice(record.sale_price ?? "");
+      const statusInput = form.elements.namedItem("status") as
+        | HTMLInputElement
+        | null;
+      if (statusInput) {
+        statusInput.value = record.status ?? "";
+      }
     } catch (error) {
       console.error(error);
       setResult({
@@ -306,6 +319,13 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
           <ProductCategorySelect
             required
             defaultValue={product.category_id}
+          />
+          <InputGroup
+            label="Trạng thái"
+            name="status"
+            placeholder="Ví dụ: Draft"
+            type="text"
+            defaultValue={product.status ?? ""}
           />
           <InputGroup
             label="Mã sản phẩm"

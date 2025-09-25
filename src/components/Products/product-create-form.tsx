@@ -159,6 +159,7 @@ export function ProductCreateForm() {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
+      status: getValue("status") || null,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -272,6 +273,12 @@ export function ProductCreateForm() {
             required
           />
           <ProductCategorySelect required />
+          <InputGroup
+            label="Trạng thái"
+            name="status"
+            placeholder="Ví dụ: Draft"
+            type="text"
+          />
           <InputGroup
             label="Mã sản phẩm"
             name="code"

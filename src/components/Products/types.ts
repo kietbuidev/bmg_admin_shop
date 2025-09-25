@@ -29,6 +29,7 @@ export type ProductRecord = {
   is_active: boolean;
   is_popular: boolean;
   priority: number;
+  status: string | null;
   meta_title: string;
   meta_keyword: string;
   meta_description: string;

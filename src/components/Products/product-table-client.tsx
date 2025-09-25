@@ -240,8 +240,16 @@ export function ProductTableClient({
                 </TableCell>
 
                 <TableCell className="align-top">
-                  <div className="text-sm text-dark dark:text-white">
-                    {dayjs(product.created_at).format("DD/MM/YYYY HH:mm")}
+                  <div className="space-y-1 text-sm text-dark dark:text-white">
+                    <StatusPill status={product.status} />
+                    <div>
+                      Tạo: {dayjs(product.created_at).format("DD/MM/YYYY HH:mm")}
+                    </div>
+                    {product.updated_at && product.updated_at !== product.created_at && (
+                      <div>
+                        Cập nhật: {dayjs(product.updated_at).format("DD/MM/YYYY HH:mm")}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
 
@@ -307,6 +315,22 @@ function StatusBadge({
       )}
     >
       {label}
+    </span>
+  );
+}
+
+function StatusPill({ status }: { status: string | null }) {
+  if (!status) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-gray-2 px-2 py-0.5 text-xs font-semibold text-dark-5 dark:bg-dark-3 dark:text-dark-6">
+        Chưa rõ
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20">
+      {status}
     </span>
   );
 }
