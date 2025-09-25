@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 
 import InputGroup from "@/components/FormElements/InputGroup";
 import { Switch } from "@/components/FormElements/switch";
+import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
 import { updateProduct } from "./fetch";
@@ -415,9 +416,25 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
             )}
             {thumbnailFile ? (
               <div className="flex items-center justify-between rounded-lg border border-stroke/60 px-4 py-3 text-sm dark:border-dark-3">
-                <span className="font-medium text-dark dark:text-white">
-                  {thumbnailFile.name}
-                </span>
+                <div className="flex items-center gap-3">
+                  <div className="h-20 w-20 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
+                    <SafeImage
+                      src={thumbnailFile.previewUrl || thumbnailFile.storedUrl}
+                      alt="Product thumbnail preview"
+                      className="h-full w-full object-cover"
+                      width={80}
+                      height={80}
+                      fallback={
+                        <div className="grid h-full w-full place-items-center text-[10px] font-semibold uppercase text-dark-5">
+                          Ảnh lỗi
+                        </div>
+                      }
+                    />
+                  </div>
+                  <span className="font-medium text-dark dark:text-white">
+                    {thumbnailFile.name}
+                  </span>
+                </div>
                 <button
                   type="button"
                   onClick={() => setThumbnailFile(null)}
@@ -456,7 +473,23 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
                     key={file.storedUrl}
                     className="flex items-center justify-between rounded-lg border border-stroke/60 px-4 py-2 text-sm dark:border-dark-3"
                   >
-                    <span className="text-dark dark:text-white">{file.name}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="h-16 w-24 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
+                        <SafeImage
+                          src={file.previewUrl || file.storedUrl}
+                          alt={file.name}
+                          className="h-full w-full object-cover"
+                          width={96}
+                          height={64}
+                          fallback={
+                            <div className="grid h-full w-full place-items-center text-[10px] font-semibold uppercase text-dark-5">
+                              Ảnh lỗi
+                            </div>
+                          }
+                        />
+                      </div>
+                      <span className="text-dark dark:text-white">{file.name}</span>
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeGalleryItem(file)}
