@@ -14,12 +14,12 @@ import { toast } from "react-hot-toast";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { Switch } from "@/components/FormElements/switch";
 import { HtmlEditor } from "@/components/Products/html-editor";
+import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
 import { createPost } from "./fetch";
 import { fromExistingLink, uploadImage, type UploadResult } from "./media";
 import type { PostFormValues } from "./types";
-import Image from "next/image";
 
 const messageStyles = {
   success:
@@ -298,13 +298,17 @@ export function PostCreateForm() {
             <div className="flex items-center justify-between rounded-lg border border-stroke/60 px-4 py-3 text-sm dark:border-dark-3">
               <div className="flex items-center gap-3">
                 <div className="h-16 w-24 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <Image
+                  <SafeImage
                     src={thumbnailFile.previewUrl || thumbnailFile.storedUrl}
                     alt="Thumbnail preview"
                     className="h-full w-full object-cover"
                     width={96}
                     height={64}
+                    fallback={
+                      <div className="grid h-full w-full place-items-center text-[10px] font-semibold uppercase text-dark-5">
+                        Ảnh lỗi
+                      </div>
+                    }
                   />
                 </div>
                 <span className="font-medium text-dark dark:text-white">
@@ -352,13 +356,17 @@ export function PostCreateForm() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-16 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <Image
+                      <SafeImage
                         src={file.previewUrl || file.storedUrl}
                         alt={file.name}
                         className="h-full w-full object-cover"
                         width={96}
                         height={64}
+                        fallback={
+                          <div className="grid h-full w-full place-items-center text-[10px] font-semibold uppercase text-dark-5">
+                            Ảnh lỗi
+                          </div>
+                        }
                       />
                     </div>
                     <span className="text-sm text-dark dark:text-white">

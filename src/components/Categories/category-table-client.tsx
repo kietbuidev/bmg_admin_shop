@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ import { CategoryActions } from "./category-actions";
 import type { CategoryRecord } from "./types";
 import { getPreviewUrl } from "./media";
 import { CategoryTableSkeleton } from "./category-table-skeleton";
-import Image from "next/image";
 
 const DESCRIPTION_LIMIT = 110;
 
@@ -294,11 +294,18 @@ function GalleryPreview({
 
   const preview = getPreviewUrl(thumbnail);
 
+  if (!preview) {
+    return (
+      <span className="text-sm text-dark-5 dark:text-dark-6">
+        Ảnh không hợp lệ
+      </span>
+    );
+  }
+
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="h-16 w-24 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <Image
+        <SafeImage
           src={preview}
           alt={`${name} gallery thumbnail`}
           width={96}

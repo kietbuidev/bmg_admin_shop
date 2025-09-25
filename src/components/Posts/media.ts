@@ -1,3 +1,5 @@
+import { sanitizeRemoteImageSrc } from "@/utils/safe-image";
+
 export type UploadResult = {
   name: string;
   storedUrl: string;
@@ -73,6 +75,8 @@ export function deriveFileName(link: string) {
 
 export function getPreviewUrl(link: string | null | undefined) {
   if (!link) return "";
+
+  let finalLink = link;
   try {
     const url = new URL(link);
     const parts = url.pathname.split("/").filter(Boolean);
@@ -81,21 +85,23 @@ export function getPreviewUrl(link: string | null | undefined) {
       const fileIndex = parts.findIndex((part) => part === "d");
       const id = parts[fileIndex + 1];
       if (id) {
-        return `https://drive.google.com/uc?export=view&id=${id}`;
+        finalLink = `https://drive.google.com/uc?export=view&id=${id}`;
+        return sanitizeRemoteImageSrc(finalLink) ?? "";
       }
     }
 
     if (url.hostname.includes("drive.google.com")) {
       const id = url.searchParams.get("id");
       if (id) {
-        return `https://drive.google.com/uc?export=view&id=${id}`;
+        finalLink = `https://drive.google.com/uc?export=view&id=${id}`;
+        return sanitizeRemoteImageSrc(finalLink) ?? "";
       }
     }
   } catch (error) {
     // ignore parsing errors
   }
 
-  return link;
+  return sanitizeRemoteImageSrc(finalLink) ?? "";
 }
 
 export function fromExistingLink(link: string): UploadResult {

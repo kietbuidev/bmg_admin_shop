@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
+import { SafeImage } from "@/components/ui/safe-image";
 import {
   Table,
   TableBody,
@@ -19,7 +20,6 @@ import { getPreviewUrl } from "./media";
 import { PostActions } from "./post-actions";
 import { PostTableSkeleton } from "./post-table-skeleton";
 import type { PostListResponse } from "./types";
-import Image from "next/image";
 
 const BADGE_STYLES = {
   active: "bg-green-light-7 text-green-dark",
@@ -333,8 +333,7 @@ function ThumbnailPreview({
   return (
     <div className="flex flex-col items-start gap-1">
       <div className="h-16 w-24 overflow-hidden rounded-md border border-stroke bg-gray-1 dark:border-dark-3 dark:bg-dark-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <Image
+        <SafeImage
           src={preview}
           alt={`${name} thumbnail`}
           className="h-full w-full object-cover"

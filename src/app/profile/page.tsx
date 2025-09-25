@@ -1,7 +1,7 @@
 "use client";
 
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import Image from "next/image";
+import { SafeImage } from "@/components/ui/safe-image";
 
 import { useState } from "react";
 import { CameraIcon } from "./_components/icons";
@@ -43,7 +43,7 @@ export default function Page() {
 
       <div className="overflow-hidden rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
         <div className="relative z-20 h-35 md:h-65">
-          <Image
+          <SafeImage
             src={data?.coverPhoto}
             alt="profile cover"
             className="h-full w-full rounded-tl-[10px] rounded-tr-[10px] object-cover object-center"
@@ -79,7 +79,7 @@ export default function Page() {
             <div className="relative drop-shadow-2">
               {data?.profilePhoto && (
                 <>
-                  <Image
+                  <SafeImage
                     src={data?.profilePhoto}
                     width={160}
                     height={160}
