@@ -151,6 +151,7 @@ function normalizeProductRecord(record: unknown): ProductRecord {
     currency: toStringValue(raw.currency, "VND"),
     sizes: toStringArray(raw.sizes),
     colors: toStringArray(raw.colors),
+    material: toStringArray(raw.material),
     view_count: toStringValue(raw.view_count, "0"),
     is_active: toBoolean(raw.is_active),
     is_popular: toBoolean(raw.is_popular),
@@ -341,6 +342,13 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
   const sale = Number.parseFloat(payload.sale_price || "0");
   let percent: string | null = payload.percent;
   const status = payload.status?.trim() ? payload.status.trim() : null;
+  const material = Array.from(
+    new Set(
+      (payload.material ?? [])
+        .map((item) => item.trim())
+        .filter((item): item is string => Boolean(item)),
+    ),
+  );
 
   if (!percent && sale > 0 && regular > 0) {
     percent = (((regular - sale) / regular) * 100).toFixed(2);
@@ -350,6 +358,7 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
     ...payload,
     status,
     percent,
+    material,
   };
 }
 

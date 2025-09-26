@@ -25,6 +25,7 @@ export type ProductRecord = {
   currency: string;
   sizes: string[];
   colors: string[];
+  material: string[];
   view_count: string;
   is_active: boolean;
   is_popular: boolean;

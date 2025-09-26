@@ -228,6 +228,7 @@ export function ProductTableClient({
 
                 <TableCell className="align-top">
                   <div className="space-y-2">
+                    <StatusPill status={product.status} />
                     <StatusBadge
                       label={product.is_active ? "Đang bán" : "Tạm ẩn"}
                       variant={product.is_active ? "active" : "inactive"}
@@ -241,15 +242,7 @@ export function ProductTableClient({
 
                 <TableCell className="align-top">
                   <div className="space-y-1 text-sm text-dark dark:text-white">
-                    <StatusPill status={product.status} />
-                    <div>
-                      Tạo: {dayjs(product.created_at).format("DD/MM/YYYY HH:mm")}
-                    </div>
-                    {product.updated_at && product.updated_at !== product.created_at && (
-                      <div>
-                        Cập nhật: {dayjs(product.updated_at).format("DD/MM/YYYY HH:mm")}
-                      </div>
-                    )}
+                      {dayjs(product.created_at).format("YYYY/MM/DD HH:mm")}
                   </div>
                 </TableCell>
 

@@ -33,8 +33,10 @@ export function ProductCreateForm() {
   const [galleryFiles, setGalleryFiles] = useState<UploadResult[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
+  const [materials, setMaterials] = useState<string[]>([]);
   const sizeInputRef = useRef<HTMLInputElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
+  const materialInputRef = useRef<HTMLInputElement>(null);
   const [regularPrice, setRegularPrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,30 +44,35 @@ export function ProductCreateForm() {
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
 
-  function addOption(type: "size" | "color", value?: string) {
+  function addOption(type: "size" | "color" | "material", value?: string) {
     const normalized = (value ?? "").trim().replace(/\s+/g, " ");
     if (!normalized) return;
 
     if (type === "size") {
       setSizes((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
       if (sizeInputRef.current) sizeInputRef.current.value = "";
-    } else {
+    } else if (type === "color") {
       setColors((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
       if (colorInputRef.current) colorInputRef.current.value = "";
+    } else {
+      setMaterials((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
+      if (materialInputRef.current) materialInputRef.current.value = "";
     }
   }
 
-  function removeOption(type: "size" | "color", value: string) {
+  function removeOption(type: "size" | "color" | "material", value: string) {
     if (type === "size") {
       setSizes((prev) => prev.filter((item) => item !== value));
-    } else {
+    } else if (type === "color") {
       setColors((prev) => prev.filter((item) => item !== value));
+    } else {
+      setMaterials((prev) => prev.filter((item) => item !== value));
     }
   }
 
   function handleOptionKeyDown(
     event: React.KeyboardEvent<HTMLInputElement>,
-    type: "size" | "color",
+    type: "size" | "color" | "material",
   ) {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -156,6 +163,7 @@ export function ProductCreateForm() {
       currency: getValue("currency") || "VND",
       sizes,
       colors,
+      material: materials,
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
@@ -214,6 +222,7 @@ export function ProductCreateForm() {
       setGalleryFiles([]);
       setSizes([]);
       setColors([]);
+      setMaterials([]);
       setRegularPrice("");
       setSalePrice("");
     } catch (error) {
@@ -336,8 +345,8 @@ export function ProductCreateForm() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-1">
+          <div className="space-y-6">
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Mô tả ngắn
             </label>
@@ -347,7 +356,13 @@ export function ProductCreateForm() {
               className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
             />
           </div>
-          <div className="space-y-3">
+          <HtmlEditor
+            name="content"
+            label="Nội dung HTML"
+            placeholder="<p>Mô tả chi tiết...</p>"
+            required
+          />
+          <div className="space-y-6">
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Mô tả chi tiết
             </label>
@@ -359,13 +374,6 @@ export function ProductCreateForm() {
             />
           </div>
         </div>
-
-          <HtmlEditor
-            name="content"
-            label="Nội dung HTML"
-            placeholder="<p>Mô tả chi tiết...</p>"
-            required
-          />
       </section>
 
       <section className="space-y-5">
@@ -488,7 +496,7 @@ export function ProductCreateForm() {
         <h3 className="text-base font-semibold text-dark dark:text-white">
           Thuộc tính sản phẩm
         </h3>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5">
           <div className="space-y-3">
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Kích thước
@@ -512,7 +520,7 @@ export function ProductCreateForm() {
                 </span>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="space-y-3">
               <input
                 ref={sizeInputRef}
                 type="text"
@@ -523,7 +531,7 @@ export function ProductCreateForm() {
               <button
                 type="button"
                 onClick={() => addOption("size", sizeInputRef.current?.value)}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
+                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white sm:w-auto"
               >
                 Thêm
               </button>
@@ -553,7 +561,7 @@ export function ProductCreateForm() {
                 </span>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="space-y-3">
               <input
                 ref={colorInputRef}
                 type="text"
@@ -564,7 +572,48 @@ export function ProductCreateForm() {
               <button
                 type="button"
                 onClick={() => addOption("color", colorInputRef.current?.value)}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white"
+                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white sm:w-auto"
+              >
+                Thêm
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-body-sm font-medium text-dark dark:text-white">
+              Chất liệu
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {materials.length ? (
+                materials.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => removeOption("material", item)}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                  >
+                    {item}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))
+              ) : (
+                <span className="text-xs text-dark-5 dark:text-dark-6">
+                  Chưa thêm chất liệu.
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
+              <input
+                ref={materialInputRef}
+                type="text"
+                placeholder="Nhập chất liệu (Cotton, Linen...)"
+                onKeyDown={(event) => handleOptionKeyDown(event, "material")}
+                className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={() => addOption("material", materialInputRef.current?.value)}
+                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white sm:w-auto"
               >
                 Thêm
               </button>
@@ -629,6 +678,7 @@ export function ProductCreateForm() {
             setGalleryFiles([]);
             setSizes([]);
             setColors([]);
+            setMaterials([]);
             setRegularPrice("");
             setSalePrice("");
           }}
