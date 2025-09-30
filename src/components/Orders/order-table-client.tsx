@@ -28,13 +28,13 @@ const STATUS_META: Record<
   PENDING: { label: "Chờ xử lý", className: "bg-yellow-light-4 text-yellow-dark" },
   CONFIRMED: { label: "Đã xác nhận", className: "bg-green-light-7 text-green-dark" },
   PROCESSING: { label: "Đang xử lý", className: "bg-blue-light-5 text-blue-dark" },
-  PACKING: { label: "Đang đóng gói", className: "bg-blue-light-5 text-blue-dark" },
-  SHIPPING: { label: "Đang giao", className: "bg-blue-light-5 text-blue-dark" },
-  DELIVERED: { label: "Đã giao", className: "bg-green-light-7 text-green-dark" },
+  // PACKING: { label: "Đang đóng gói", className: "bg-blue-light-5 text-blue-dark" },
+  // SHIPPING: { label: "Đang giao", className: "bg-blue-light-5 text-blue-dark" },
+  // DELIVERED: { label: "Đã giao", className: "bg-green-light-7 text-green-dark" },
   COMPLETED: { label: "Hoàn tất", className: "bg-green-light-7 text-green-dark" },
-  CANCELLED: { label: "Đã huỷ", className: "bg-red-light-5 text-red-dark" },
-  FAILED: { label: "Thất bại", className: "bg-red-light-5 text-red-dark" },
-  REFUNDED: { label: "Hoàn tiền", className: "bg-primary/10 text-primary" },
+  // CANCELLED: { label: "Đã huỷ", className: "bg-red-light-5 text-red-dark" },
+  // FAILED: { label: "Thất bại", className: "bg-red-light-5 text-red-dark" },
+  // REFUNDED: { label: "Hoàn tiền", className: "bg-primary/10 text-primary" },
 };
 
 const DEFAULT_STATUS_META = {
