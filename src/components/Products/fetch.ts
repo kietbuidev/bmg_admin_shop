@@ -27,6 +27,8 @@ type ProductApiPagination = Record<string, unknown>;
 export type GetProductsParams = {
   page?: number;
   limit?: number;
+  categoryId?: string | null;
+  status?: string | null;
 };
 
 function toNullableString(value: unknown): string | null {
@@ -199,12 +201,24 @@ function resolveProductsEndpoint() {
 export async function getProducts({
   page = 1,
   limit = 10,
+  categoryId,
+  status,
 }: GetProductsParams = {}): Promise<ProductListResponse> {
   const endpoint = resolveProductsEndpoint();
   const url = new URL(endpoint);
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(limit));
   url.searchParams.set("per_page", String(limit));
+
+  const normalizedCategory = categoryId?.trim();
+  if (normalizedCategory) {
+    url.searchParams.set("category_id", normalizedCategory);
+  }
+
+  const normalizedStatus = status?.trim();
+  if (normalizedStatus) {
+    url.searchParams.set("status", normalizedStatus);
+  }
 
   const response = await fetch(url.toString(), {
     headers: {

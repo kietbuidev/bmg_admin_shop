@@ -1,7 +1,14 @@
 "use client";
 
 import dayjs from "dayjs";
-import { useCallback, useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { toast } from "react-hot-toast";
 
 import { SafeImage } from "@/components/ui/safe-image";
@@ -23,6 +30,8 @@ import type { ProductListResponse, ProductRecord } from "./types";
 import { getPreviewUrl } from "./media";
 import { ProductActions } from "./product-actions";
 import { ProductTableSkeleton } from "./product-table-skeleton";
+import { getCategories } from "@/components/Categories/fetch";
+import type { CategoryRecord } from "@/components/Categories/types";
 
 const BADGE_STYLES = {
   active: "bg-green-light-7 text-green-dark",
@@ -45,29 +54,64 @@ type ProductTableClientProps = {
   pageSize: number;
 };
 
+type FiltersState = {
+  categoryId: string | "ALL";
+  status: string;
+};
+
 export function ProductTableClient({
   initialData,
   pageSize,
 }: ProductTableClientProps) {
   const [data, setData] = useState<ProductListResponse>(initialData);
   const [pageSizeState, setPageSizeState] = useState(pageSize);
+  const [filters, setFilters] = useState<FiltersState>({ categoryId: "ALL", status: "" });
+  const [selectedCategory, setSelectedCategory] = useState<FiltersState["categoryId"]>("ALL");
+  const [statusValue, setStatusValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<CategoryRecord[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
 
   const { pagination } = data;
   const products = data.rows;
   const totalPages = Math.max(1, pagination.total_page || 1);
   const currentPage = pagination.current_page || 1;
 
-  const loadPage = useCallback(
-    async (page: number) => {
+  const loadProducts = useCallback(
+    async (page: number, nextFilters?: FiltersState) => {
+      const resolvedFilters = nextFilters ?? filters;
+      const normalizedFilters: FiltersState = {
+        categoryId: resolvedFilters.categoryId,
+        status: resolvedFilters.status.trim(),
+      };
+      const targetPage = Math.max(1, page);
+
       try {
         setIsFetching(true);
         setError(null);
-        const res = await getProducts({ page, limit: pageSizeState });
+        const res = await getProducts({
+          page: targetPage,
+          limit: pageSizeState,
+          categoryId:
+            normalizedFilters.categoryId && normalizedFilters.categoryId !== "ALL"
+              ? normalizedFilters.categoryId
+              : undefined,
+          status: normalizedFilters.status || undefined,
+        });
         setData(res);
         setPageSizeState(res.pagination.per_page || pageSizeState);
+        setFilters((prev) => {
+          if (
+            prev.categoryId === normalizedFilters.categoryId &&
+            prev.status === normalizedFilters.status
+          ) {
+            return prev;
+          }
+          return normalizedFilters;
+        });
       } catch (err) {
         console.error(err);
         setError("Không thể tải danh sách sản phẩm.");
@@ -75,13 +119,48 @@ export function ProductTableClient({
         setIsFetching(false);
       }
     },
-    [pageSizeState],
+    [filters, pageSizeState],
   );
 
   useEffect(() => {
     setData(initialData);
     setPageSizeState(pageSize);
   }, [initialData, pageSize]);
+
+  useEffect(() => {
+    setSelectedCategory(filters.categoryId);
+  }, [filters.categoryId]);
+
+  useEffect(() => {
+    setStatusValue(filters.status);
+  }, [filters.status]);
+
+  useEffect(() => {
+    setIsLoadingCategories(true);
+    getCategories({ page: 1, limit: 100 })
+      .then((res) => {
+        setCategories(res.rows);
+        setCategoriesError(null);
+      })
+      .catch((err) => {
+        console.error(err);
+        setCategoriesError("Không thể tải danh mục");
+      })
+      .finally(() => setIsLoadingCategories(false));
+  }, []);
+
+  const statusSuggestions = useMemo(() => {
+    const unique = new Set<string>();
+    products.forEach((product) => {
+      if (product.status) {
+        unique.add(product.status);
+      }
+    });
+    if (filters.status) {
+      unique.add(filters.status);
+    }
+    return Array.from(unique).sort((a, b) => a.localeCompare(b));
+  }, [filters.status, products]);
 
   async function handleDelete(id: string, name: string) {
     if (deletingId) return;
@@ -92,7 +171,7 @@ export function ProductTableClient({
       toast.success(`Đã xoá sản phẩm "${name}"`);
 
       const shouldGoPrev = products.length === 1 && currentPage > 1;
-      await loadPage(shouldGoPrev ? currentPage - 1 : currentPage);
+      await loadProducts(shouldGoPrev ? currentPage - 1 : currentPage);
     } catch (error) {
       console.error(error);
       toast.error("Không thể xoá sản phẩm, vui lòng thử lại.");
@@ -107,6 +186,40 @@ export function ProductTableClient({
 
   const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage >= totalPages;
+
+  const handleFilterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isFetching) {
+      return;
+    }
+
+    await loadProducts(1, {
+      categoryId: selectedCategory,
+      status: statusValue.trim(),
+    });
+  };
+
+  const handleResetFilters = async () => {
+    if (isFetching) {
+      return;
+    }
+
+    if (filters.categoryId === "ALL" && filters.status === "") {
+      return;
+    }
+
+    setSelectedCategory("ALL");
+    setStatusValue("");
+    await loadProducts(1, { categoryId: "ALL", status: "" });
+  };
+
+  const handleCategoryChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(event.target.value as FiltersState["categoryId"]);
+  };
+
+  const handleStatusChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setStatusValue(event.target.value);
+  };
 
   return (
     <div className="rounded-[10px] border border-stroke bg-white p-6 shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
@@ -126,6 +239,74 @@ export function ProductTableClient({
           </div>
         )}
       </div>
+
+      <form
+        onSubmit={handleFilterSubmit}
+        className="mb-5 flex flex-wrap items-end gap-4"
+      >
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="font-semibold text-dark dark:text-white">
+            Danh mục
+          </label>
+          <select
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            className="min-w-[220px] rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+            disabled={isFetching || isLoadingCategories}
+          >
+            <option value="ALL">Tất cả danh mục</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          {categoriesError && (
+            <span className="text-xs text-red">{categoriesError}</span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-2 text-sm">
+          <label className="font-semibold text-dark dark:text-white">
+            Trạng thái sản phẩm
+          </label>
+          <input
+            type="text"
+            value={statusValue}
+            onChange={handleStatusChange}
+            list="product-status-options"
+            placeholder="Ví dụ: New"
+            className="min-w-[220px] rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+            disabled={isFetching}
+            autoComplete="off"
+          />
+          <datalist id="product-status-options">
+            {statusSuggestions.map((status) => (
+              <option key={status} value={status} />
+            ))}
+          </datalist>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:bg-opacity-60"
+            disabled={isFetching}
+          >
+            Áp dụng
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleResetFilters()}
+            className="rounded-lg border border-stroke px-4 py-2 text-sm font-semibold text-dark transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:text-white dark:hover:bg-dark-3"
+            disabled={
+              isFetching || (filters.categoryId === "ALL" && filters.status === "")
+            }
+          >
+            Đặt lại
+          </button>
+        </div>
+      </form>
 
       <div className="overflow-x-auto">
         <Table className="w-full">
@@ -268,7 +449,7 @@ export function ProductTableClient({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => loadPage(currentPage - 1)}
+            onClick={() => void loadProducts(currentPage - 1)}
             disabled={isFirstPage || isFetching}
             className="rounded-md border border-stroke px-3 py-1.5 transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:hover:bg-dark-3"
           >
@@ -281,7 +462,7 @@ export function ProductTableClient({
 
           <button
             type="button"
-            onClick={() => loadPage(currentPage + 1)}
+            onClick={() => void loadProducts(currentPage + 1)}
             disabled={isLastPage || isFetching}
             className="rounded-md border border-stroke px-3 py-1.5 transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:hover:bg-dark-3"
           >
