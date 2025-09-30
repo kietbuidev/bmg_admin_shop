@@ -10,7 +10,7 @@ export function Logo() {
         fill
         className="dark:hidden"
         alt="NextAdmin logo"
-        role="presentation"
+        role="presentation" 
         quality={100}
       />
 
