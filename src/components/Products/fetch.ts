@@ -364,7 +364,7 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
   const regular = Number.parseFloat(payload.regular_price || "0");
   const sale = Number.parseFloat(payload.sale_price || "0");
   let percent: string | null = payload.percent;
-  const status = payload.status?.trim() ? payload.status.trim() : null;
+  const status = toProductStatus(payload.status);
   const material = Array.from(
     new Set(
       (payload.material ?? [])
