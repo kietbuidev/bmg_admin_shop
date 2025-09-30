@@ -363,7 +363,7 @@ export async function getChatsData() {
   return [
     {
       name: "Jacob Jones",
-      profile: "/images/user/user-01.png",
+      profile: "/images/user/user-02.png",
       isActive: true,
       lastMessage: {
         content: "See you tomorrow at the meeting!",
