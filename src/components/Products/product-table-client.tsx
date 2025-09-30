@@ -292,7 +292,7 @@ export function ProductTableClient({
             onClick={() => void handleResetFilters()}
             className="rounded-lg border border-stroke px-4 py-2 text-sm font-semibold text-dark transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:text-white dark:hover:bg-dark-3"
             disabled={
-              isFetching || (filters.categoryId === "ALL" && filters.status === "")
+              isFetching || (filters.categoryId === "ALL" && filters.status === "ALL")
             }
           >
             Đặt lại
