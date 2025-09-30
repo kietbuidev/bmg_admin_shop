@@ -1,7 +1,7 @@
 "use client";
 
 import dayjs from "dayjs";
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 
 import {
@@ -57,6 +57,16 @@ const ORDER_STATUS_OPTIONS = (
   label: meta.label,
 })) as Array<{ value: OrderStatus; label: string }>;
 
+const STATUS_FILTER_OPTIONS: Array<{ value: OrderStatus | "ALL"; label: string }> = [
+  { value: "ALL", label: "Tất cả trạng thái" },
+  ...ORDER_STATUS_OPTIONS,
+];
+
+type FiltersState = {
+  status: OrderStatus | "ALL";
+  search: string;
+};
+
 function parseAmount(amount: string | null | undefined) {
   if (!amount) return null;
   const parsed = Number.parseFloat(amount);
@@ -108,6 +118,8 @@ export function OrderTableClient({
 }: OrderTableClientProps) {
   const [data, setData] = useState<OrderListResponse>(initialData);
   const [pageSizeState, setPageSizeState] = useState(pageSize);
+  const [filters, setFilters] = useState<FiltersState>({ status: "ALL", search: "" });
+  const [searchValue, setSearchValue] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
@@ -117,14 +129,40 @@ export function OrderTableClient({
   const totalPages = Math.max(1, pagination.total_page || 1);
   const currentPage = Math.max(1, pagination.current_page || 1);
 
-  const loadPage = useCallback(
-    async (pageNumber: number) => {
+  const loadOrders = useCallback(
+    async (pageNumber: number, nextFilters?: FiltersState) => {
+      const resolvedFilters = nextFilters ?? filters;
+      const normalizedSearch = resolvedFilters.search.trim();
+      const normalizedFilters: FiltersState = {
+        status: resolvedFilters.status,
+        search: normalizedSearch,
+      };
+
+      const targetPage = Math.max(1, pageNumber);
+
       try {
         setIsFetching(true);
         setError(null);
-        const res = await getOrders({ page: pageNumber, limit: pageSizeState });
+        const res = await getOrders({
+          page: targetPage,
+          limit: pageSizeState,
+          status:
+            normalizedFilters.status && normalizedFilters.status !== "ALL"
+              ? normalizedFilters.status
+              : undefined,
+          search: normalizedFilters.search || undefined,
+        });
         setData(res);
         setPageSizeState(res.pagination.per_page || pageSizeState);
+        setFilters((prev) => {
+          if (
+            prev.status === normalizedFilters.status &&
+            prev.search === normalizedFilters.search
+          ) {
+            return prev;
+          }
+          return normalizedFilters;
+        });
       } catch (err) {
         console.error(err);
         setError("Không thể tải danh sách đơn hàng.");
@@ -132,13 +170,17 @@ export function OrderTableClient({
         setIsFetching(false);
       }
     },
-    [pageSizeState],
+    [filters, pageSizeState],
   );
 
   useEffect(() => {
     setData(initialData);
     setPageSizeState(pageSize);
   }, [initialData, pageSize]);
+
+  useEffect(() => {
+    setSearchValue(filters.search);
+  }, [filters.search]);
 
   if (isFetching && orders.length === 0) {
     return <OrderTableSkeleton />;
@@ -147,7 +189,45 @@ export function OrderTableClient({
   const isFirstPage = currentPage <= 1;
   const isLastPage = currentPage >= totalPages;
 
-  async function handleStatusChange(order: OrderRecord, nextStatus: OrderStatus) {
+  const handleSearchSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isFetching) {
+      return;
+    }
+    const normalized = searchValue.trim();
+    await loadOrders(1, { status: filters.status, search: normalized });
+  };
+
+  const handleResetFilters = async () => {
+    if (isFetching) {
+      return;
+    }
+    if (
+      filters.status === "ALL" &&
+      filters.search === "" &&
+      searchValue.trim() === ""
+    ) {
+      return;
+    }
+
+    await loadOrders(1, { status: "ALL", search: "" });
+  };
+
+  const handleStatusFilterChange = async (
+    event: ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextStatus = event.target.value as FiltersState["status"];
+    if (isFetching) {
+      return;
+    }
+    if (nextStatus === filters.status) {
+      return;
+    }
+
+    await loadOrders(1, { status: nextStatus, search: filters.search });
+  };
+
+  async function handleOrderStatusChange(order: OrderRecord, nextStatus: OrderStatus) {
     if (order.status === nextStatus) return;
     if (updatingOrderId) return;
 
@@ -165,7 +245,7 @@ export function OrderTableClient({
       );
 
       const targetPage = pagination.current_page || 1;
-      await loadPage(targetPage);
+      await loadOrders(targetPage);
     } catch (err) {
       console.error(err);
       toast.error(
@@ -195,6 +275,61 @@ export function OrderTableClient({
             {error}
           </div>
         )}
+      </div>
+
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="flex flex-wrap items-center gap-2"
+        >
+          <input
+            type="text"
+            name="orderSearch"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            placeholder="Tìm theo email hoặc số điện thoại"
+            className="w-64 rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+            autoComplete="off"
+          />
+
+          <button
+            type="submit"
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:bg-opacity-60"
+            disabled={isFetching}
+          >
+            Tìm kiếm
+          </button>
+
+          <button
+            type="button"
+            onClick={() => void handleResetFilters()}
+            className="rounded-lg border border-stroke px-4 py-2 text-sm font-semibold text-dark transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:text-white dark:hover:bg-dark-3"
+            disabled={
+              isFetching ||
+              (filters.status === "ALL" &&
+                filters.search === "" &&
+                searchValue.trim() === "")
+            }
+          >
+            Làm mới
+          </button>
+        </form>
+
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-dark-6 dark:text-dark-6">Trạng thái:</span>
+          <select
+            value={filters.status}
+            onChange={(event) => void handleStatusFilterChange(event)}
+            className="rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
+            disabled={isFetching}
+          >
+            {STATUS_FILTER_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -237,7 +372,7 @@ export function OrderTableClient({
                       status={order.status}
                       disabled={Boolean(updatingOrderId) && updatingOrderId !== order.id}
                       isUpdating={updatingOrderId === order.id}
-                      onStatusChange={(next) => handleStatusChange(order, next)}
+                      onStatusChange={(next) => handleOrderStatusChange(order, next)}
                     />
                   </div>
                 </TableCell>
@@ -272,7 +407,7 @@ export function OrderTableClient({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => loadPage(currentPage - 1)}
+            onClick={() => void loadOrders(currentPage - 1)}
             disabled={isFirstPage || isFetching}
             className="rounded-md border border-stroke px-3 py-1.5 transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:hover:bg-dark-3"
           >
@@ -285,7 +420,7 @@ export function OrderTableClient({
 
           <button
             type="button"
-            onClick={() => loadPage(currentPage + 1)}
+            onClick={() => void loadOrders(currentPage + 1)}
             disabled={isLastPage || isFetching}
             className="rounded-md border border-stroke px-3 py-1.5 transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:hover:bg-dark-3"
           >

@@ -35,6 +35,8 @@ type OrderStatusUpdateApiResponse = {
 export type GetOrdersParams = {
   page?: number;
   limit?: number;
+  status?: OrderStatus | "ALL" | null;
+  search?: string | null;
   signal?: AbortSignal;
 };
 
@@ -180,6 +182,8 @@ function resolveOrdersEndpoint() {
 export async function getOrders({
   page = 1,
   limit = 10,
+  status,
+  search,
   signal,
 }: GetOrdersParams = {}): Promise<OrderListResponse> {
   const endpoint = resolveOrdersEndpoint();
@@ -187,6 +191,15 @@ export async function getOrders({
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(limit));
   url.searchParams.set("per_page", String(limit));
+
+  if (status && status !== "ALL") {
+    url.searchParams.set("status", status);
+  }
+
+  const normalizedSearch = search?.trim();
+  if (normalizedSearch) {
+    url.searchParams.set("search", normalizedSearch);
+  }
 
   const response = await fetch(url.toString(), {
     headers: {
