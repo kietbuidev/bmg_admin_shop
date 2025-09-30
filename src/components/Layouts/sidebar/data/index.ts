@@ -56,11 +56,11 @@ export const NAV_DATA = [
         icon: Icons.Category,
         items: [
           {
-            title: "Danh sách",
+            title: "List",
             url: "/categories/list",
           },
           {
-            title: "Tạo mới",
+            title: "Create",
             url: "/categories/create",
           },
         ],
@@ -70,11 +70,11 @@ export const NAV_DATA = [
         icon: Icons.Box,
         items: [
           {
-            title: "Danh sách",
+            title: "List",
             url: "/products/list",
           },
           {
-            title: "Tạo mới",
+            title: "Create",
             url: "/products/create",
           },
         ],
@@ -84,7 +84,7 @@ export const NAV_DATA = [
         icon: Icons.Receipt,
         items: [
           {
-            title: "Danh sách",
+            title: "List",
             url: "/orders/list",
           },
         ],
@@ -94,11 +94,11 @@ export const NAV_DATA = [
         icon: Icons.Document,
         items: [
           {
-            title: "Danh sách",
+            title: "List",
             url: "/posts/list",
           },
           {
-            title: "Tạo mới",
+            title: "Create",
             url: "/posts/create",
           },
         ],

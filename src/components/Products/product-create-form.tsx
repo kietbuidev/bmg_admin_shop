@@ -13,7 +13,11 @@ import { cn } from "@/lib/utils";
 import { createProduct } from "./fetch";
 import { UploadResult, uploadImage } from "./media";
 import { ProductCategorySelect } from "./product-category-select";
-import { ProductFormValues } from "./types";
+import {
+  PRODUCT_STATUS_VALUES,
+  type ProductStatus,
+  ProductFormValues,
+} from "./types";
 import { HtmlEditor } from "./html-editor";
 
 const messageStyles = {
@@ -148,6 +152,11 @@ export function ProductCreateForm() {
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
 
+    const rawStatus = getValue("status");
+    const status = PRODUCT_STATUS_VALUES.includes(rawStatus as ProductStatus)
+      ? (rawStatus as ProductStatus)
+      : null;
+
     const payload: ProductFormValues = {
       category_id: getValue("category_id"),
       name: getValue("name"),
@@ -167,7 +176,7 @@ export function ProductCreateForm() {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
-      status: getValue("status") || null,
+      status,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -282,12 +291,23 @@ export function ProductCreateForm() {
             required
           />
           <ProductCategorySelect required />
-          <InputGroup
-            label="Trạng thái"
-            name="status"
-            placeholder="Ví dụ: Draft"
-            type="text"
-          />
+          <div className="space-y-2">
+            <label className="text-body-sm font-medium text-dark dark:text-white">
+              Trạng thái
+            </label>
+            <select
+              name="status"
+              defaultValue=""
+              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
+            >
+              <option value="">-- Chọn trạng thái --</option>
+              {PRODUCT_STATUS_VALUES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
           <InputGroup
             label="Mã sản phẩm"
             name="code"

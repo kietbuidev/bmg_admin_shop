@@ -6,7 +6,6 @@ import {
   FormEvent,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 import { toast } from "react-hot-toast";
@@ -26,7 +25,12 @@ import {
   deleteProduct,
   getProducts,
 } from "./fetch";
-import type { ProductListResponse, ProductRecord } from "./types";
+import {
+  PRODUCT_STATUS_VALUES,
+  type ProductStatus,
+  type ProductListResponse,
+  type ProductRecord,
+} from "./types";
 import { getPreviewUrl } from "./media";
 import { ProductActions } from "./product-actions";
 import { ProductTableSkeleton } from "./product-table-skeleton";
@@ -56,7 +60,7 @@ type ProductTableClientProps = {
 
 type FiltersState = {
   categoryId: string | "ALL";
-  status: string;
+  status: ProductStatus | "ALL";
 };
 
 export function ProductTableClient({
@@ -65,9 +69,9 @@ export function ProductTableClient({
 }: ProductTableClientProps) {
   const [data, setData] = useState<ProductListResponse>(initialData);
   const [pageSizeState, setPageSizeState] = useState(pageSize);
-  const [filters, setFilters] = useState<FiltersState>({ categoryId: "ALL", status: "" });
+  const [filters, setFilters] = useState<FiltersState>({ categoryId: "ALL", status: "ALL" });
   const [selectedCategory, setSelectedCategory] = useState<FiltersState["categoryId"]>("ALL");
-  const [statusValue, setStatusValue] = useState("");
+  const [statusValue, setStatusValue] = useState<FiltersState["status"]>("ALL");
   const [isFetching, setIsFetching] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +89,7 @@ export function ProductTableClient({
       const resolvedFilters = nextFilters ?? filters;
       const normalizedFilters: FiltersState = {
         categoryId: resolvedFilters.categoryId,
-        status: resolvedFilters.status.trim(),
+        status: resolvedFilters.status,
       };
       const targetPage = Math.max(1, page);
 
@@ -99,7 +103,10 @@ export function ProductTableClient({
             normalizedFilters.categoryId && normalizedFilters.categoryId !== "ALL"
               ? normalizedFilters.categoryId
               : undefined,
-          status: normalizedFilters.status || undefined,
+          status:
+            normalizedFilters.status !== "ALL"
+              ? normalizedFilters.status
+              : undefined,
         });
         setData(res);
         setPageSizeState(res.pagination.per_page || pageSizeState);
@@ -149,19 +156,6 @@ export function ProductTableClient({
       .finally(() => setIsLoadingCategories(false));
   }, []);
 
-  const statusSuggestions = useMemo(() => {
-    const unique = new Set<string>();
-    products.forEach((product) => {
-      if (product.status) {
-        unique.add(product.status);
-      }
-    });
-    if (filters.status) {
-      unique.add(filters.status);
-    }
-    return Array.from(unique).sort((a, b) => a.localeCompare(b));
-  }, [filters.status, products]);
-
   async function handleDelete(id: string, name: string) {
     if (deletingId) return;
 
@@ -195,7 +189,7 @@ export function ProductTableClient({
 
     await loadProducts(1, {
       categoryId: selectedCategory,
-      status: statusValue.trim(),
+      status: statusValue,
     });
   };
 
@@ -204,21 +198,21 @@ export function ProductTableClient({
       return;
     }
 
-    if (filters.categoryId === "ALL" && filters.status === "") {
+    if (filters.categoryId === "ALL" && filters.status === "ALL") {
       return;
     }
 
     setSelectedCategory("ALL");
-    setStatusValue("");
-    await loadProducts(1, { categoryId: "ALL", status: "" });
+    setStatusValue("ALL");
+    await loadProducts(1, { categoryId: "ALL", status: "ALL" });
   };
 
   const handleCategoryChange = (event: ChangeEvent<HTMLSelectElement>) => {
     setSelectedCategory(event.target.value as FiltersState["categoryId"]);
   };
 
-  const handleStatusChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setStatusValue(event.target.value);
+  const handleStatusChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setStatusValue(event.target.value as FiltersState["status"]);
   };
 
   return (
@@ -270,21 +264,19 @@ export function ProductTableClient({
           <label className="font-semibold text-dark dark:text-white">
             Trạng thái sản phẩm
           </label>
-          <input
-            type="text"
+          <select
             value={statusValue}
             onChange={handleStatusChange}
-            list="product-status-options"
-            placeholder="Ví dụ: New"
             className="min-w-[220px] rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
             disabled={isFetching}
-            autoComplete="off"
-          />
-          <datalist id="product-status-options">
-            {statusSuggestions.map((status) => (
-              <option key={status} value={status} />
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            {PRODUCT_STATUS_VALUES.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
             ))}
-          </datalist>
+          </select>
         </div>
 
         <div className="flex gap-2">

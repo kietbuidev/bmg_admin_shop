@@ -1,3 +1,12 @@
+export const PRODUCT_STATUS_VALUES = [
+  "NEW",
+  "BEST_SELLER",
+  "SALE_OFF",
+  "NORMAL",
+] as const;
+
+export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
+
 export type ProductCategorySummary = {
   id: string;
   name: string;
@@ -30,7 +39,7 @@ export type ProductRecord = {
   is_active: boolean;
   is_popular: boolean;
   priority: number;
-  status: string | null;
+  status: ProductStatus | null;
   meta_title: string;
   meta_keyword: string;
   meta_description: string;

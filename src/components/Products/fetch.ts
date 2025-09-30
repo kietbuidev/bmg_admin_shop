@@ -1,4 +1,6 @@
 import {
+  PRODUCT_STATUS_VALUES,
+  type ProductStatus,
   ProductCategorySummary,
   ProductFormPayload,
   ProductFormValues,
@@ -28,7 +30,7 @@ export type GetProductsParams = {
   page?: number;
   limit?: number;
   categoryId?: string | null;
-  status?: string | null;
+  status?: ProductStatus | null;
 };
 
 function toNullableString(value: unknown): string | null {
@@ -111,6 +113,14 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
+function toProductStatus(value: unknown): ProductStatus | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return PRODUCT_STATUS_VALUES.includes(normalized as ProductStatus)
+    ? (normalized as ProductStatus)
+    : null;
+}
+
 function normalizeCategory(
   category: unknown,
 ): ProductCategorySummary | null {
@@ -158,7 +168,7 @@ function normalizeProductRecord(record: unknown): ProductRecord {
     is_active: toBoolean(raw.is_active),
     is_popular: toBoolean(raw.is_popular),
     priority: toNumber(raw.priority, 0),
-    status: toNullableString(raw.status),
+    status: toProductStatus(raw.status),
     meta_title: toStringValue(raw.meta_title),
     meta_keyword: toStringValue(raw.meta_keyword),
     meta_description: toStringValue(raw.meta_description),
@@ -215,9 +225,8 @@ export async function getProducts({
     url.searchParams.set("category_id", normalizedCategory);
   }
 
-  const normalizedStatus = status?.trim();
-  if (normalizedStatus) {
-    url.searchParams.set("status", normalizedStatus);
+  if (status && PRODUCT_STATUS_VALUES.includes(status)) {
+    url.searchParams.set("status", status);
   }
 
   const response = await fetch(url.toString(), {

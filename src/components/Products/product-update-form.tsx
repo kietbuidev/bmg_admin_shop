@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 import InputGroup from "@/components/FormElements/InputGroup";
 import { Switch } from "@/components/FormElements/switch";
@@ -13,7 +14,12 @@ import { cn } from "@/lib/utils";
 import { updateProduct } from "./fetch";
 import { fromExistingLink, uploadImage, type UploadResult } from "./media";
 import { ProductCategorySelect } from "./product-category-select";
-import { ProductFormValues, ProductRecord } from "./types";
+import {
+  PRODUCT_STATUS_VALUES,
+  type ProductStatus,
+  ProductFormValues,
+  ProductRecord,
+} from "./types";
 import { HtmlEditor } from "./html-editor";
 
 const messageStyles = {
@@ -33,6 +39,7 @@ type ProductUpdateFormProps = {
 };
 
 export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
+  const router = useRouter();
   const [thumbnailFile, setThumbnailFile] = useState<UploadResult | null>(
     product.thumbnail ? fromExistingLink(product.thumbnail) : null,
   );
@@ -67,7 +74,7 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
     (form.elements.namedItem("is_popular") as HTMLInputElement | null)!.checked =
       Boolean(product.is_popular);
     const statusInput = form.elements.namedItem("status") as
-      | HTMLInputElement
+      | HTMLSelectElement
       | null;
     if (statusInput) {
       statusInput.value = product.status ?? "";
@@ -181,6 +188,11 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
 
+    const rawStatus = getValue("status");
+    const status = PRODUCT_STATUS_VALUES.includes(rawStatus as ProductStatus)
+      ? (rawStatus as ProductStatus)
+      : null;
+
     const payload: ProductFormValues = {
       category_id: getValue("category_id"),
       name: getValue("name"),
@@ -200,7 +212,7 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       is_active: formData.get("is_active") !== null,
       is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
-      status: getValue("status") || null,
+      status,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -242,28 +254,11 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
     setResult(null);
 
     try {
-      const record = await updateProduct(product.id, payload);
+      await updateProduct(product.id, payload);
       toast.success("Đã cập nhật sản phẩm thành công");
-      setResult({
-        type: "success",
-        message: `Cập nhật lúc ${dayjs(record.updated_at).format(
-          "DD/MM/YYYY HH:mm",
-        )}.`,
-      });
-
-      setThumbnailFile(record.thumbnail ? fromExistingLink(record.thumbnail) : null);
-      setGalleryFiles(record.gallery.map((link) => fromExistingLink(link)));
-      setSizes(record.sizes);
-      setColors(record.colors);
-      setMaterials(record.material);
-      setRegularPrice(record.regular_price);
-      setSalePrice(record.sale_price ?? "");
-      const statusInput = form.elements.namedItem("status") as
-        | HTMLInputElement
-        | null;
-      if (statusInput) {
-        statusInput.value = record.status ?? "";
-      }
+      router.push("/products/list");
+      router.refresh();
+      return;
     } catch (error) {
       console.error(error);
       setResult({
@@ -330,13 +325,23 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
             required
             defaultValue={product.category_id}
           />
-          <InputGroup
-            label="Trạng thái"
-            name="status"
-            placeholder="Ví dụ: Draft"
-            type="text"
-            defaultValue={product.status ?? ""}
-          />
+          <div className="space-y-2">
+            <label className="text-body-sm font-medium text-dark dark:text-white">
+              Trạng thái
+            </label>
+            <select
+              name="status"
+              defaultValue={product.status ?? ""}
+              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
+            >
+              <option value="">-- Chọn trạng thái --</option>
+              {PRODUCT_STATUS_VALUES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
           <InputGroup
             label="Mã sản phẩm"
             name="code"
