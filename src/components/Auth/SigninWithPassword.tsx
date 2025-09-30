@@ -1,7 +1,11 @@
 "use client";
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
+import { persistAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
 
@@ -13,6 +17,7 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setData({
@@ -21,15 +26,66 @@ export default function SigninWithPassword() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // You can remove this code block
+    if (!data.email || !data.password) {
+      toast.error("Email and password are required");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://bmgshop-production.up.railway.app"}/api/users/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            accept: "application/json",
+          },
+          body: JSON.stringify({
+            email: data.email,
+            password: data.password,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        const message =
+          (errorBody && (errorBody.message as string)) ||
+          "Unable to sign in. Please try again.";
+
+        throw new Error(message);
+      }
+
+      const result = await response.json();
+      const tokens = result?.data;
+
+      if (!tokens?.access_token || !tokens?.refresh_token) {
+        throw new Error("Login response is missing tokens");
+      }
+
+      persistAuth({
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+      });
+
+      toast.success("Signed in successfully");
+
+      router.push("/");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in. Please try again.";
+
+      toast.error(message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -73,7 +129,12 @@ export default function SigninWithPassword() {
 
         <Link
           href="/auth/forgot-password"
-          className="hover:text-primary dark:text-white dark:hover:text-primary"
+          className={cn(
+            "hover:text-primary dark:text-white dark:hover:text-primary",
+            loading && "pointer-events-none opacity-70",
+          )}
+          aria-disabled={loading}
+          tabIndex={loading ? -1 : undefined}
         >
           Forgot Password?
         </Link>
@@ -82,7 +143,11 @@ export default function SigninWithPassword() {
       <div className="mb-4.5">
         <button
           type="submit"
-          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+          className={cn(
+            "flex w-full items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90",
+            loading && "cursor-not-allowed opacity-80",
+          )}
+          disabled={loading}
         >
           Sign In
           {loading && (
