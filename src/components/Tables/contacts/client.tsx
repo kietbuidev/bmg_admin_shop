@@ -24,11 +24,8 @@ import {
   getContacts,
   updateContact,
 } from "../fetch";
-import {
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 
 const STATUS_OPTIONS: ContactRecord["status"][] = [
   "New",
@@ -126,6 +123,7 @@ export function ContactsTableClient({
 
     try {
       await updateContact(id, { status });
+      toast.success("Status updated successfully");
     } catch (err) {
       console.error(err);
       setRows(previousRows);
@@ -154,6 +152,7 @@ export function ContactsTableClient({
 
     try {
       await updateContact(id, { note });
+      toast.success("Note updated successfully");
     } catch (err) {
       console.error(err);
       setRows(previousRows);

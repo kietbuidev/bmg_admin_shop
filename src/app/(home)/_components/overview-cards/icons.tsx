@@ -46,6 +46,22 @@ export function Product(props: SVGPropsType) {
   );
 }
 
+export function Orders(props: SVGPropsType) {
+  return (
+    <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
+      <circle cx={29} cy={29} r={29} fill="#5750F1" />
+      <path
+        d="M25.667 21.333c0-1.84 1.493-3.333 3.333-3.333h4c1.84 0 3.333 1.492 3.333 3.333V23h2.334c1.105 0 2 .895 2 2v12c0 1.105-.895 2-2 2H23.333c-1.105 0-2-.895-2-2V25c0-1.105.895-2 2-2h2.334v-1.667zm2.333 0V23h8v-1.667c0-.368-.299-.666-.666-.666h-4c-.368 0-.667.298-.667.666z"
+        fill="#fff"
+      />
+      <path
+        d="M23.333 27c0-.552.448-1 1-1h9.334a1 1 0 010 2h-9.334a1 1 0 01-1-1zm0 5c0-.552.448-1 1-1h9.334a1 1 0 010 2h-9.334a1 1 0 01-1-1zm0 5c0-.552.448-1 1-1H30a1 1 0 010 2h-5.667a1 1 0 01-1-1z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
 export function Users(props: SVGPropsType) {
   return (
     <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
@@ -67,6 +83,39 @@ export function Users(props: SVGPropsType) {
       <path
         d="M38.75 34.417c0 1.795-2.206 3.25-4.898 3.25.793-.867 1.339-1.955 1.339-3.248 0-1.295-.547-2.384-1.342-3.252 2.693 0 4.9 1.455 4.9 3.25zM35.5 22.501a3.25 3.25 0 01-4.364 3.054 6.163 6.163 0 00.805-3.055c0-1.11-.293-2.152-.804-3.053A3.25 3.25 0 0135.5 22.5z"
         fill="#fff"
+      />
+    </svg>
+  );
+}
+
+export function Contacts(props: SVGPropsType) {
+  return (
+    <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
+      <circle cx={29} cy={29} r={29} fill="#FF6B6B" />
+      <path
+        d="M20.667 21.333c0-1.84 1.493-3.333 3.333-3.333h10c1.84 0 3.333 1.492 3.333 3.333V24h2.334c1.105 0 2 .895 2 2v11.333c0 1.105-.895 2-2 2H18.333c-1.105 0-2-.895-2-2V26c0-1.105.895-2 2-2h2.334v-2.667zm2.333 0V24h12v-2.667c0-.368-.299-.666-.666-.666H23c-.368 0-.667.298-.667.666z"
+        fill="#fff"
+      />
+      <circle cx={23.5} cy={30.5} r={1.5} fill="#fff" />
+      <circle cx={29} cy={30.5} r={1.5} fill="#fff" />
+      <circle cx={34.5} cy={30.5} r={1.5} fill="#fff" />
+    </svg>
+  );
+}
+
+export function Posts(props: SVGPropsType) {
+  return (
+    <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
+      <circle cx={29} cy={29} r={29} fill="#FFB347" />
+      <path
+        d="M21.333 19.667c0-1.105.895-2 2-2h14c1.105 0 2 .895 2 2V23H21.333v-3.333z"
+        fill="#fff"
+        opacity={0.8}
+      />
+      <rect x={21.333} y={23} width={18} height={15.334} rx={2} fill="#fff" />
+      <path
+        d="M25.333 27.333a1 1 0 011-1h8a1 1 0 110 2h-8a1 1 0 01-1-1zm0 4a1 1 0 011-1h4.667a1 1 0 110 2h-4.667a1 1 0 01-1-1zm0 4a1 1 0 011-1h6.667a1 1 0 110 2h-6.667a1 1 0 01-1-1z"
+        fill="#FF8A00"
       />
     </svg>
   );
