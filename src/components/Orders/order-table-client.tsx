@@ -278,43 +278,6 @@ export function OrderTableClient({
       </div>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <form
-          onSubmit={handleSearchSubmit}
-          className="flex flex-wrap items-center gap-2"
-        >
-          <input
-            type="text"
-            name="orderSearch"
-            value={searchValue}
-            onChange={(event) => setSearchValue(event.target.value)}
-            placeholder="Tìm theo email hoặc số điện thoại"
-            className="w-64 rounded-lg border border-stroke bg-white px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-1 focus:ring-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-            autoComplete="off"
-          />
-
-          <button
-            type="submit"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-opacity-90 disabled:cursor-not-allowed disabled:bg-opacity-60"
-            disabled={isFetching}
-          >
-            Tìm kiếm
-          </button>
-
-          <button
-            type="button"
-            onClick={() => void handleResetFilters()}
-            className="rounded-lg border border-stroke px-4 py-2 text-sm font-semibold text-dark transition hover:bg-gray-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-dark-3 dark:text-white dark:hover:bg-dark-3"
-            disabled={
-              isFetching ||
-              (filters.status === "ALL" &&
-                filters.search === "" &&
-                searchValue.trim() === "")
-            }
-          >
-            Làm mới
-          </button>
-        </form>
-
         <div className="flex items-center gap-2 text-sm">
           <span className="text-dark-6 dark:text-dark-6">Trạng thái:</span>
           <select
