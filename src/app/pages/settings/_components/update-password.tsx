@@ -81,8 +81,6 @@ export function UpdatePasswordForm() {
     form.new_password.trim() !== "" &&
     form.new_confirm_password.trim() !== "";
 
-  const isDirty = hasAllFields;
-
   return (
     <ShowcaseSection title="Update Password" className="!p-7">
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -129,7 +127,7 @@ export function UpdatePasswordForm() {
           <button
             type="button"
             onClick={resetForm}
-            disabled={isSubmitting || !isDirty}
+            disabled={isSubmitting || !hasAllFields}
             className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-3 dark:text-white"
           >
             Reset

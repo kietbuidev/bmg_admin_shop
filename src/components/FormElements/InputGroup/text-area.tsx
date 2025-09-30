@@ -39,8 +39,11 @@ export function TextAreaGroup({
     ),
     required,
     disabled,
-    "data-active": active,
   };
+
+  if (active !== undefined) {
+    (textareaProps as Record<string, unknown>)["data-active"] = active;
+  }
 
   if (value !== undefined) {
     textareaProps.value = value;
