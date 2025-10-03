@@ -1,25 +1,29 @@
-import dark from "@/assets/logos/LogoDark.svg";
-import light from "@/assets/logos/LogoLight.svg";
+import logoLightMode from "@/assets/logos/light.png";
+import logoDarkMode from "@/assets/logos/dark.png";
 import Image from "next/image";
 
 export function Logo() {
   return (
-    <div className="relative h-8 max-w-[10.847rem]">
+    <div className="relative mx-auto h-20 w-64 max-w-full select-none">
       <Image
-        src={dark}
+        src={logoLightMode}
         fill
-        className="dark:hidden"
-        alt="KAYLIN logo"
-        role="presentation" 
+        className="object-contain object-center dark:hidden"
+        alt="KAYLIN Collection logo"
+        role="presentation"
+        sizes="(max-width: 768px) 220px, 256px"
+        priority
         quality={100}
       />
 
       <Image
-        src={light}
+        src={logoDarkMode}
         fill
-        className="hidden dark:block"
-        alt="KAYLIN logo"
+        className="hidden object-contain object-center dark:block"
+        alt="KAYLIN Collection logo"
         role="presentation"
+        sizes="(max-width: 768px) 220px, 256px"
+        priority
         quality={100}
       />
     </div>

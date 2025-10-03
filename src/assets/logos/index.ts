@@ -5,5 +5,5 @@ export { default as google } from './google.svg';
 export { default as main } from './main.svg'; 
 export { default as vimeo } from './vimeo.svg'; 
 export { default as x } from './x.svg'; 
-export { default as LogoDark } from './LogoDark.svg'; 
-export { default as LogoLight } from './LogoLight.svg';
+export { default as LogoDark } from './dark.png'; 
+export { default as LogoLight } from './light.png';

@@ -1,11 +1,13 @@
-import { getStoredAuth } from "@/lib/auth";
+import { getStoredAuth, persistAuth } from "@/lib/auth";
 
 const DEFAULT_USER_PROFILE_ENDPOINT =
   "https://bmgshop-production.up.railway.app/api/users/me";
 const DEFAULT_UPDATE_PROFILE_ENDPOINT =
   "https://bmgshop-production.up.railway.app/api/users/profile";
 const DEFAULT_UPDATE_PASSWORD_ENDPOINT =
-  "http://localhost:5001/v1/api/users/password";
+  "https://bmgshop-production.up.railway.app/api/users/password";
+const DEFAULT_REFRESH_TOKEN_ENDPOINT =
+  "https://bmgshop-production.up.railway.app/api/users/refresh-token";
 
 export type UserProfile = {
   id: string;
@@ -57,6 +59,13 @@ function resolvePasswordEndpoint() {
   return (
     process.env.NEXT_PUBLIC_USER_PASSWORD_ENDPOINT ??
     DEFAULT_UPDATE_PASSWORD_ENDPOINT
+  );
+}
+
+function resolveRefreshEndpoint() {
+  return (
+    process.env.NEXT_PUBLIC_USER_REFRESH_ENDPOINT ??
+    DEFAULT_REFRESH_TOKEN_ENDPOINT
   );
 }
 
@@ -131,7 +140,58 @@ export async function updateCurrentUser(payload: UpdateUserPayload): Promise<Use
     throw new Error(body?.message ?? "Invalid update response");
   }
 
+  await refreshAuthTokens();
+
   return body.data;
+}
+
+async function refreshAuthTokens(): Promise<void> {
+  const auth = getStoredAuth();
+
+  if (!auth?.refreshToken) {
+    throw new Error("Missing refresh token");
+  }
+
+  const endpoint = resolveRefreshEndpoint();
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      refresh_token: auth.refreshToken,
+    }),
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | {
+        data?: {
+          access_token?: string;
+          refresh_token?: string;
+        };
+        message?: string;
+      }
+    | null;
+
+  if (!response.ok) {
+    const message =
+      (payload && typeof payload.message === "string"
+        ? payload.message
+        : null) ?? "Unable to refresh authentication";
+    throw new Error(message);
+  }
+
+  const tokens = payload?.data;
+
+  if (!tokens?.access_token || !tokens?.refresh_token) {
+    throw new Error("Refresh response is missing tokens");
+  }
+
+  persistAuth({
+    accessToken: tokens.access_token,
+    refreshToken: tokens.refresh_token,
+  });
 }
 
 export async function updateUserPassword(payload: UpdatePasswordPayload): Promise<void> {
