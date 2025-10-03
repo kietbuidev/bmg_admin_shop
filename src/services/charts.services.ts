@@ -37,61 +37,108 @@ export async function getDevicesUsedData(
   return data;
 }
 
+type DistributionItem = {
+  value: string;
+  total: number;
+};
+
+export type SystemCounterChart = {
+  filters: {
+    startDate: string | null;
+    endDate: string | null;
+  };
+  summary: {
+    totalVisits: number;
+    uniqueIps: number;
+  };
+  dailyVisits: Array<{
+    date: string;
+    total: number;
+  }>;
+  osDistribution: DistributionItem[];
+  browserDistribution: DistributionItem[];
+  deviceDistribution: DistributionItem[];
+};
+
+const DEFAULT_ANALYTICS_BASE_URL =
+  process.env.NEXT_PUBLIC_ANALYTICS_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "https://bmgshop-production.up.railway.app";
+
 export async function getPaymentsOverviewData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
-  // Fake delay
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Currently the analytics API does not support timeframe presets, but we keep
+  // the argument for compatibility with the existing picker.
+  void timeFrame;
 
-  if (timeFrame === "yearly") {
-    return {
-      received: [
-        { x: 2020, y: 450 },
-        { x: 2021, y: 620 },
-        { x: 2022, y: 780 },
-        { x: 2023, y: 920 },
-        { x: 2024, y: 1080 },
-      ],
-      due: [
-        { x: 2020, y: 1480 },
-        { x: 2021, y: 1720 },
-        { x: 2022, y: 1950 },
-        { x: 2023, y: 2300 },
-        { x: 2024, y: 1200 },
-      ],
-    };
+  const endpoint = new URL(
+    "/api/system/counter/chart",
+    DEFAULT_ANALYTICS_BASE_URL,
+  );
+
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const message = `Unable to fetch system counter chart (status ${response.status})`;
+    throw new Error(message);
+  }
+
+  const payload = (await response.json()) as
+    | {
+        data?: {
+          filters?: {
+            start_date?: string | null;
+            end_date?: string | null;
+          };
+          summary?: {
+            total_visits?: number;
+            unique_ips?: number;
+          };
+          daily_visits?: Array<{
+            date?: string;
+            total?: number;
+          }>;
+          os_distribution?: DistributionItem[];
+          browser_distribution?: DistributionItem[];
+          device_distribution?: DistributionItem[];
+        };
+        message?: string;
+      }
+    | null;
+
+  const data = payload?.data;
+
+  if (!data) {
+    throw new Error(
+      payload?.message ?? "System counter chart response is missing data",
+    );
   }
 
   return {
-    received: [
-      { x: "Jan", y: 0 },
-      { x: "Feb", y: 20 },
-      { x: "Mar", y: 35 },
-      { x: "Apr", y: 45 },
-      { x: "May", y: 35 },
-      { x: "Jun", y: 55 },
-      { x: "Jul", y: 65 },
-      { x: "Aug", y: 50 },
-      { x: "Sep", y: 65 },
-      { x: "Oct", y: 75 },
-      { x: "Nov", y: 60 },
-      { x: "Dec", y: 75 },
-    ],
-    due: [
-      { x: "Jan", y: 15 },
-      { x: "Feb", y: 9 },
-      { x: "Mar", y: 17 },
-      { x: "Apr", y: 32 },
-      { x: "May", y: 25 },
-      { x: "Jun", y: 68 },
-      { x: "Jul", y: 80 },
-      { x: "Aug", y: 68 },
-      { x: "Sep", y: 84 },
-      { x: "Oct", y: 94 },
-      { x: "Nov", y: 74 },
-      { x: "Dec", y: 62 },
-    ],
-  };
+    filters: {
+      startDate: data.filters?.start_date ?? null,
+      endDate: data.filters?.end_date ?? null,
+    },
+    summary: {
+      totalVisits: data.summary?.total_visits ?? 0,
+      uniqueIps: data.summary?.unique_ips ?? 0,
+    },
+    dailyVisits:
+      data.daily_visits?.map((item) => ({
+        date: item.date ?? "",
+        total: item.total ?? 0,
+      })) ?? [],
+    osDistribution: data.os_distribution ?? [],
+    browserDistribution: data.browser_distribution ?? [],
+    deviceDistribution: data.device_distribution ?? [],
+  } satisfies SystemCounterChart;
 }
 
 export async function getWeeksProfitData(timeFrame?: string) {
