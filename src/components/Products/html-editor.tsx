@@ -1,32 +1,57 @@
 "use client";
 
+import { sanitizeRemoteImageSrc } from "@/utils/safe-image";
+import { buildApiUrl } from "@/lib/env";
+import { Editor } from "@tinymce/tinymce-react";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
-import DOMPurify from "isomorphic-dompurify";
+import type { Editor as TinyMCEEditorType } from "tinymce";
 
-type EditorCommand = {
-  id: string;
-  label: string;
-  value?: string;
-  type?: "block";
-  prompt?: string;
+interface TinyMCEBlobInfo {
+  blob: () => Blob;
+  filename: () => string;
+}
+
+type UploadApiResponse = {
+  location?: string;
+  url?: string;
+  width?: number;
+  height?: number;
+  secure_url?: string;
+  downloadLink?: string;
+  previewUrl?: string;
+  storedUrl?: string;
+  data?: {
+    webViewLink?: string;
+    url?: string;
+    location?: string;
+    secure_url?: string;
+    downloadLink?: string;
+    previewUrl?: string;
+    storedUrl?: string;
+    width?: number;
+    height?: number;
+    metadata?: {
+      width?: number;
+      height?: number;
+      [key: string]: unknown;
+    };
+    size?: {
+      width?: number;
+      height?: number;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
 };
 
-const COMMANDS: ReadonlyArray<EditorCommand> = [
-  { id: "formatBlock", label: "Normal", value: "P", type: "block" },
-  { id: "formatBlock", label: "H1", value: "H1", type: "block" },
-  { id: "formatBlock", label: "H2", value: "H2", type: "block" },
-  { id: "formatBlock", label: "H3", value: "H3", type: "block" },
-  { id: "bold", label: "B" },
-  { id: "italic", label: "I" },
-  { id: "underline", label: "U" },
-  { id: "strikeThrough", label: "S" },
-  { id: "createLink", label: "Link", prompt: "Nhập URL" },
-  { id: "blockquote", label: "Quote", type: "block", value: "BLOCKQUOTE" },
-  { id: "insertImage", label: "Image" },
-  { id: "insertOrderedList", label: "1." },
-  { id: "insertUnorderedList", label: "•" },
-];
+type UploadedImage = {
+  url: string;
+  width?: number;
+  height?: number;
+  name?: string;
+};
 
 type HtmlEditorProps = {
   name: string;
@@ -34,7 +59,159 @@ type HtmlEditorProps = {
   defaultValue?: string;
   placeholder?: string;
   required?: boolean;
+  onChange?: (value: string) => void;
 };
+
+const DEFAULT_UPLOAD_ENDPOINT = buildApiUrl("api/system/upload-image");
+
+function resolveUploadEndpoint() {
+  return (
+    process.env.NEXT_PUBLIC_PRODUCTS_UPLOAD_ENDPOINT ??
+    process.env.NEXT_PUBLIC_UPLOAD_ENDPOINT ??
+    DEFAULT_UPLOAD_ENDPOINT
+  );
+}
+
+function resolveImageUrl(raw?: string): string | undefined {
+  if (!raw) return undefined;
+
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    // Đảm bảo URL hợp lệ; Cloudinary trả về https nên sẽ đi qua bước này.
+    // eslint-disable-next-line no-new
+    new URL(trimmed);
+  } catch (error) {
+    console.error("Failed to resolve image URL", error);
+    return sanitizeRemoteImageSrc(trimmed) ?? trimmed;
+  }
+
+  const sanitized = sanitizeRemoteImageSrc(trimmed);
+  return sanitized ?? trimmed;
+}
+
+function extractDimensions(payload: UploadApiResponse): {
+  width?: number;
+  height?: number;
+} {
+  const candidates = [
+    payload?.data && (payload.data as { width?: number; height?: number }),
+    payload?.data?.metadata,
+    payload?.data?.size,
+    payload,
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const width = Number((candidate as { width?: number }).width ?? NaN);
+    const height = Number((candidate as { height?: number }).height ?? NaN);
+    const validWidth = Number.isFinite(width) ? width : undefined;
+    const validHeight = Number.isFinite(height) ? height : undefined;
+    if (validWidth || validHeight) {
+      return { width: validWidth, height: validHeight };
+    }
+  }
+
+  return {};
+}
+
+async function getImageDimensions(url: string): Promise<{ width?: number; height?: number }> {
+  if (typeof window === "undefined") return {};
+
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous"; 
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        console.warn("Failed to load image for dimension check:", url);
+        resolve({});
+      };
+      img.src = url;
+    } catch (error) {
+      console.warn("Failed to get image dimensions for:", url, error);
+      resolve({});
+    }
+  });
+}
+
+async function uploadImage(file: Blob, filename: string): Promise<UploadedImage> {
+  const formData = new FormData();
+  formData.append("file", file, filename);
+  formData.append("type", "products");
+
+  const endpoint = resolveUploadEndpoint();
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed (status ${response.status})`);
+  }
+
+  const payload = (await response.json()) as UploadApiResponse;
+
+  const candidates: Array<string | undefined> = [
+    payload?.data?.secure_url as string | undefined,
+    payload?.data?.url as string | undefined, 
+    payload?.data?.location as string | undefined,
+    payload?.data?.webViewLink as string | undefined,
+    payload?.data?.downloadLink as string | undefined,
+    payload?.data?.previewUrl as string | undefined,
+    payload?.data?.storedUrl as string | undefined,
+    payload?.secure_url as string | undefined,
+    payload?.location as string | undefined,
+    payload?.url as string | undefined,
+    payload?.storedUrl as string | undefined,
+  ];
+
+  const imageUrl = candidates
+    .map((value) => resolveImageUrl(value))
+    .find((value) => typeof value === "string" && value.length > 0);
+
+  if (!imageUrl) {
+    throw new Error("Image URL not found in upload response.");
+  }
+
+  const dimensions = extractDimensions(payload);
+
+  // Fallback: chỉ đo kích thước khi server chưa trả về width/height
+  if (!dimensions.width || !dimensions.height) {
+    const fallback = await getImageDimensions(imageUrl);
+    if (fallback.width) dimensions.width = fallback.width;
+    if (fallback.height) dimensions.height = fallback.height;
+  }
+
+  return {
+    url: imageUrl,
+    width: dimensions.width,
+    height: dimensions.height,
+    name:
+      (payload?.data as { name?: string })?.name ||
+      (payload as { name?: string })?.name ||
+      filename,
+  };
+}
+
+async function uploadFromBlobInfo(blobInfo: TinyMCEBlobInfo): Promise<UploadedImage> {
+  return uploadImage(blobInfo.blob(), blobInfo.filename());
+}
+
+async function uploadFromFile(file: File): Promise<UploadedImage> {
+  return uploadImage(file, file.name);
+}
+
+function sanitizeContent(raw: string): string {
+  if (!raw) return "";
+  const withoutEmptyParagraphs = raw.replace(/<p>(?:&nbsp;|\s|<br\s*\/?\>)*<\/p>/gi, "");
+  const trimmed = withoutEmptyParagraphs.trim();
+  return trimmed.length > 0 ? trimmed : "";
+}
 
 export function HtmlEditor({
   name,
@@ -42,254 +219,244 @@ export function HtmlEditor({
   defaultValue = "",
   placeholder,
   required,
+  onChange,
 }: HtmlEditorProps) {
-  const [value, setValue] = useState(defaultValue);
-  const [isPreview, setIsPreview] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const savedRangeRef = useRef<Range | null>(null);
-  const id = useId();
+  const editorId = useId();
+  const { resolvedTheme } = useTheme();
+  const [value, setValue] = useState(() => sanitizeContent(defaultValue));
+  const editorRef = useRef<TinyMCEEditorType | null>(null);
 
-  useEffect(() => {
-    setValue(defaultValue);
-    if (editorRef.current) {
-      editorRef.current.innerHTML = defaultValue || "";
-    }
-  }, [defaultValue]);
+  const initialContent = useMemo(() => sanitizeContent(defaultValue), [defaultValue]);
 
-  function saveSelection() {
-    const sel = window.getSelection?.();
-    if (sel && sel.rangeCount > 0) {
-      savedRangeRef.current = sel.getRangeAt(0);
-    }
-  }
+  const applyImageMeta = useCallback(
+    ({ url, width, height, alt }: { url?: string; width?: number; height?: number; alt?: string }) => {
+      const editor = editorRef.current;
+      if (!editor) return;
 
-  function restoreSelection() {
-    const sel = window.getSelection?.();
-    if (sel && savedRangeRef.current) {
-      sel.removeAllRanges();
-      sel.addRange(savedRangeRef.current);
-    }
-  }
-
-  const handleCommand = useCallback(
-    async (command: string, prompt?: string, blockValue?: string) => {
-      if (!editorRef.current) return;
-      editorRef.current.focus();
-
-      let commandValue: string | undefined = undefined;
-      if (prompt) {
-        const userInput = window.prompt(prompt);
-        if (!userInput) return;
-        commandValue = userInput;
-      }
-
-      // Special case: image button opens file picker
-      if (command === "insertImage") {
-        saveSelection();
-        fileInputRef.current?.click();
-        return;
-      } else if (command === "formatBlock" && blockValue) {
-        document.execCommand(command, false, blockValue);
-      } else if (command === "blockquote" && blockValue) {
-        document.execCommand("formatBlock", false, blockValue);
+      const selectionNode = editor.selection.getNode();
+      let node: HTMLImageElement | undefined;
+      
+      // 1. Ưu tiên ảnh đang được chọn
+      if (selectionNode?.nodeName === "IMG") {
+        node = selectionNode as HTMLImageElement;
       } else {
-        document.execCommand(command, false, commandValue);
+        // 2. Tìm ảnh được TinyMCE đánh dấu (thường là ảnh mới chèn)
+        node = editor.dom.select("img[data-mce-selected]")[0] as HTMLImageElement | undefined;
+        
+        if (!node) {
+          // 3. Fallback: tìm ảnh cuối cùng, thường là ảnh mới được chèn
+          const allImages = editor.dom.select("img");
+          if (allImages.length) {
+              const lastImage = allImages[allImages.length - 1] as HTMLImageElement;
+              
+              // Kiểm tra: Ảnh đó phải là ảnh mới chèn (chưa có width/height hoặc có src là url mới)
+              const isNewImage = !lastImage.width && !lastImage.height;
+              const srcMatches = url && lastImage.src === url;
+              
+              if (isNewImage || srcMatches) {
+                  node = lastImage;
+              }
+          }
+        }
       }
 
-      setValue(editorRef.current.innerHTML);
+      if (!node) return;
+
+      const runUpdate = (imgNode: HTMLImageElement) => {
+        if (url) {
+          editor.dom.setAttrib(imgNode, "src", url);
+          editor.dom.setAttrib(imgNode, "data-mce-src", url);
+        }
+
+        if (alt) {
+          editor.dom.setAttrib(imgNode, "alt", alt);
+          editor.dom.setAttrib(imgNode, "title", alt);
+        }
+
+        const roundedWidth = width && Number.isFinite(width) ? Math.round(width) : undefined;
+        const roundedHeight = height && Number.isFinite(height) ? Math.round(height) : undefined;
+
+        // Cập nhật width
+        if (roundedWidth) {
+          const widthValue = String(roundedWidth);
+          editor.dom.setAttrib(imgNode, "width", widthValue);
+          editor.dom.setAttrib(imgNode, "data-mce-width", widthValue);
+          imgNode.width = roundedWidth;
+        } else {
+          editor.dom.setAttrib(imgNode, "width", null);
+          editor.dom.setAttrib(imgNode, "data-mce-width", null);
+          imgNode.removeAttribute("width");
+        }
+
+        // Cập nhật height
+        if (roundedHeight) {
+          const heightValue = String(roundedHeight);
+          editor.dom.setAttrib(imgNode, "height", heightValue);
+          editor.dom.setAttrib(imgNode, "data-mce-height", heightValue);
+          imgNode.height = roundedHeight;
+        } else {
+          editor.dom.setAttrib(imgNode, "height", null);
+          editor.dom.setAttrib(imgNode, "data-mce-height", null);
+          imgNode.removeAttribute("height");
+        }
+
+        // Đảm bảo editor nhận biết thay đổi
+        editor.selection.select(imgNode);
+        editor.nodeChanged();
+      };
+      
+      // Chạy ngay lập tức, và sau một chút delay để đảm bảo TinyMCE đã xử lý xong DOM
+      runUpdate(node);
+      window.setTimeout(() => runUpdate(node), 100);
+
     },
     [],
   );
 
-  async function handlePickedImage(file: File) {
-    if (!file) return;
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("UPLOAD_FAILED");
-      const data = await res.json();
-      const url = data.url || data.downloadLink || data.webContentLink;
+  useEffect(() => {
+    const sanitized = sanitizeContent(defaultValue);
+    setValue(sanitized);
 
-      restoreSelection();
-      if (editorRef.current) {
-        editorRef.current.focus();
-        document.execCommand("insertImage", false, url);
-        setValue(editorRef.current.innerHTML);
+    const current = editorRef.current;
+    if (current && sanitized !== current.getContent()) {
+      current.setContent(sanitized);
+    }
+  }, [defaultValue]);
+
+  const handleChange = useCallback(
+    (content: string) => {
+      const sanitized = sanitizeContent(content);
+      setValue(sanitized);
+      if (onChange) {
+        onChange(sanitized);
       }
-    } catch (e) {
-      console.error(e);
-      alert("Tải ảnh thất bại. Vui lòng thử lại.");
-    }
-  }
+    },
+    [onChange],
+  );
 
-  async function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
-    const items = e.clipboardData?.items || [];
-    for (const it of items as any) {
-      if (it.kind === "file") {
-        const file = it.getAsFile?.();
-        if (file && file.type.startsWith("image/")) {
-          e.preventDefault();
-          saveSelection();
-          await handlePickedImage(file);
-          return;
-        }
-      }
-    }
-  }
+  const contentStyle = useMemo(() => {
+    const textColor = resolvedTheme === "dark" ? "#F9FAFB" : "#111928";
+    const linkColor = resolvedTheme === "dark" ? "#93C5FD" : "#4F46E5";
+    return `body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; color: ${textColor}; background-color: transparent; } a { color: ${linkColor}; } img { max-width: 100%; height: auto; }`;
+  }, [resolvedTheme]);
 
-  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    const files = e.dataTransfer?.files;
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    if (file.type?.startsWith("image/")) {
-      e.preventDefault();
-      saveSelection();
-      await handlePickedImage(file);
-    }
-  }
-
-  const previewHTML = useMemo(() => {
-    return DOMPurify.sanitize(value, {
-      ALLOWED_TAGS: [
-        "p",
-        "span",
-        "a",
-        "img",
-        "h1",
-        "h2",
-        "h3",
-        "ul",
-        "ol",
-        "li",
-        "blockquote",
-        "pre",
+  const editorInit = useMemo(
+    () => ({
+      height: 380,
+      menubar: false,
+      automatic_uploads: true,
+      promotion: false,
+      branding: false,
+      placeholder,
+      image_title: false,
+      image_description: false,
+      plugins: [
+        "advlist",
+        "lists",
+        "link",
+        "image",
+        "lineheight",
+        "charmap",
+        "preview",
+        "anchor",
+        "searchreplace",
+        "visualblocks",
         "code",
-        "strong",
-        "em",
-        "u",
-        "s",
-        "br",
-        "hr",
+        "fullscreen",
+        "insertdatetime",
         "table",
-        "thead",
-        "tbody",
-        "tr",
-        "td",
-        "th",
-        "figure",
-        "figcaption",
+        "wordcount",
       ],
-      ALLOWED_ATTR: [
-        "href",
-        "target",
-        "rel",
-        "src",
-        "alt",
-        "title",
-        "class",
-        "style",
-        "width",
-        "height",
-        "align",
-        "loading",
-      ],
-    });
-  }, [value]);
+      toolbar:
+        "undo redo | blocks fontsize | bold italic underline | align lineheight | numlist bullist indent outdent | image link | removeformat",
+      file_picker_types: "image",
+      skin: resolvedTheme === "dark" ? "oxide-dark" : "oxide",
+      content_css: resolvedTheme === "dark" ? "dark" : "default",
+      content_style: contentStyle,
+      
+      // *** 1. Xử lý Drag/Drop và Paste (images_upload_handler) ***
+      images_upload_handler: async (blobInfo: unknown) => {
+        const info = blobInfo as TinyMCEBlobInfo;
+        try {
+            const uploaded = await uploadFromBlobInfo(info);
+            
+            // Dùng setTimeout 0 để đảm bảo TinyMCE đã chèn placeholder
+            setTimeout(() => {
+              applyImageMeta({
+                  url: uploaded.url,
+                  width: uploaded.width,
+                  height: uploaded.height,
+                  alt: uploaded.name ?? info.filename(),
+              });
+            }, 0);
+            
+            return uploaded.url; 
+        } catch (error) {
+            console.error("Image upload failed:", error);
+            throw new Error('Image upload failed: ' + (error as Error).message);
+        }
+      },
+      
+      // *** 2. Xử lý nút Image (file_picker_callback) ***
+      file_picker_callback: (callback: (url: string, meta?: Record<string, unknown>) => void) => {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/*";
 
-  const toolbarButtons = useMemo(
-    () =>
-      COMMANDS.map((item) => (
-        <button
-          key={item.id + (item.value ?? "")}
-          type="button"
-          onClick={() => handleCommand(item.id, item.prompt, item.value)}
-          className="rounded px-2 py-1 text-xs font-semibold uppercase text-primary hover:bg-primary/10"
-        >
-          {item.label}
-        </button>
-      )),
-    [handleCommand],
+        input.onchange = async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+
+          try {
+            const uploaded = await uploadFromFile(file);
+
+            const widthString = typeof uploaded.width === "number" && Number.isFinite(uploaded.width)
+                  ? String(Math.round(uploaded.width))
+                  : undefined;
+            const heightString = typeof uploaded.height === "number" && Number.isFinite(uploaded.height)
+                  ? String(Math.round(uploaded.height))
+                  : undefined;
+
+            // Truyền kích thước và style ngay lập tức qua callback
+            callback(uploaded.url, {
+              alt: uploaded.name ?? file.name,
+              title: uploaded.name ?? file.name,
+              width: widthString,
+              height: heightString,
+              style: "max-width: 100%; height: auto;", 
+            });
+            
+          } catch (error) {
+            console.error("Image upload failed:", error);
+          }
+        };
+
+        input.click();
+      },
+    }),
+    [applyImageMeta, contentStyle, placeholder, resolvedTheme],
   );
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <label className="text-body-sm font-medium text-dark dark:text-white">
-          {label}
-          {required && <span className="ml-1 text-red">*</span>}
-        </label>
+      <label
+        className="text-body-sm font-medium text-dark dark:text-white"
+        htmlFor={editorId}
+      >
+        {label}
+        {required && <span className="ml-1 text-red">*</span>}
+      </label>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-dark-6 dark:text-dark-6">
-          <button
-            type="button"
-            onClick={() => setIsPreview(false)}
-            className={cn(
-              "rounded-md px-2 py-1 transition",
-              !isPreview
-                ? "bg-primary text-white"
-                : "hover:bg-gray-1 dark:hover:bg-dark-3",
-            )}
-          >
-            Soạn thảo
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsPreview(true)}
-            className={cn(
-              "rounded-md px-2 py-1 transition",
-              isPreview
-                ? "bg-primary text-white"
-                : "hover:bg-gray-1 dark:hover:bg-dark-3",
-            )}
-          >
-            Preview
-          </button>
-        </div>
-      </div>
-
-      {!isPreview ? (
-        <div className="rounded-lg border border-stroke dark:border-dark-3">
-          <div className="flex flex-wrap gap-1 border-b border-stroke p-2 dark:border-dark-3">
-            {toolbarButtons}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handlePickedImage(f);
-              // reset value to allow picking same file twice
-              (e.target as HTMLInputElement).value = "";
-            }}
-          />
-          <div
-            id={id}
-            ref={editorRef}
-            contentEditable
-            suppressContentEditableWarning
-            data-placeholder={placeholder}
-            onInput={(event) =>
-              setValue((event.target as HTMLDivElement).innerHTML)
-            }
-            onPaste={handlePaste}
-            onDrop={handleDrop}
-            onBlur={saveSelection}
-            className="[data-placeholder]:text-dark-6 min-h-[200px] space-y-3 px-5.5 py-3 text-sm text-dark outline-none dark:text-white"
-          />
-        </div>
-      ) : (
-        <div className="rounded-lg border border-stroke bg-gray-1/40 p-4 text-sm leading-6 text-dark dark:border-dark-3 dark:bg-dark-2 dark:text-dark-6">
-          {value ? (
-            <div dangerouslySetInnerHTML={{ __html: previewHTML }} />
-            ) : (
-            <span className="text-dark-6">Chưa có nội dung.</span>
-          )}
-        </div>
-      )}
+      <Editor
+        id={editorId}
+        apiKey="no-api-key"
+        initialValue={initialContent}
+        init={editorInit}
+        onEditorChange={handleChange}
+        onInit={(_evt, editor) => {
+          editorRef.current = editor;
+        }}
+      />
 
       <input type="hidden" name={name} value={value} required={required} />
     </div>

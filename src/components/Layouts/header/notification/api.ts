@@ -1,9 +1,12 @@
 import { getStoredAuth } from "@/lib/auth";
+import { buildApiUrl } from "@/lib/env";
 
-const DEFAULT_NOTIFICATIONS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/notifications";
-const DEFAULT_NOTIFICATIONS_READ_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/notifications/read";
+const DEFAULT_NOTIFICATIONS_ENDPOINT = buildApiUrl(
+  "api/users/notifications",
+);
+const DEFAULT_NOTIFICATIONS_READ_ENDPOINT = buildApiUrl(
+  "api/users/notifications/read",
+);
 
 export type NotificationSummary = {
   unread_count: number;

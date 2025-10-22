@@ -1,4 +1,5 @@
 import * as logos from "@/assets/logos";
+import { buildApiUrl } from "@/lib/env";
 
 export async function getTopProducts() {
   // Fake delay
@@ -177,8 +178,7 @@ type UpdateContactPayload = {
   note?: string;
 };
 
-const DEFAULT_CONTACTS_API_BASE_URL =
-  "https://bmgshop-production.up.railway.app/api";
+const DEFAULT_CONTACTS_API_BASE_URL = buildApiUrl("api");
 
 function normalizeBaseUrl(url: string) {
   return url.endsWith("/") ? url.slice(0, -1) : url;

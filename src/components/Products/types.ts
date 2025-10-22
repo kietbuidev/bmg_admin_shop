@@ -7,6 +7,10 @@ export const PRODUCT_STATUS_VALUES = [
 
 export type ProductStatus = (typeof PRODUCT_STATUS_VALUES)[number];
 
+export const PRODUCT_SOURCE_VALUES = ["IN_HOUSE", "SUPPLIER"] as const;
+
+export type ProductSourceType = (typeof PRODUCT_SOURCE_VALUES)[number];
+
 export type ProductCategorySummary = {
   id: string;
   name: string;
@@ -37,9 +41,9 @@ export type ProductRecord = {
   material: string[];
   view_count: string;
   is_active: boolean;
-  is_popular: boolean;
   priority: number;
-  status: ProductStatus | null;
+  source_type: ProductSourceType | null;
+  status: ProductStatus[];
   meta_title: string;
   meta_keyword: string;
   meta_description: string;

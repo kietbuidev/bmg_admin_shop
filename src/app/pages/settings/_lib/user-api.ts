@@ -1,13 +1,10 @@
 import { getStoredAuth, persistAuth } from "@/lib/auth";
+import { buildApiUrl } from "@/lib/env";
 
-const DEFAULT_USER_PROFILE_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/me";
-const DEFAULT_UPDATE_PROFILE_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/profile";
-const DEFAULT_UPDATE_PASSWORD_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/password";
-const DEFAULT_REFRESH_TOKEN_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/users/refresh-token";
+const DEFAULT_USER_PROFILE_ENDPOINT = buildApiUrl("api/users/me");
+const DEFAULT_UPDATE_PROFILE_ENDPOINT = buildApiUrl("api/users/profile");
+const DEFAULT_UPDATE_PASSWORD_ENDPOINT = buildApiUrl("api/users/password");
+const DEFAULT_REFRESH_TOKEN_ENDPOINT = buildApiUrl("api/users/refresh-token");
 
 export type UserProfile = {
   id: string;

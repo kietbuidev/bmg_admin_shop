@@ -16,7 +16,9 @@ import { fromExistingLink, uploadImage, type UploadResult } from "./media";
 import { ProductCategorySelect } from "./product-category-select";
 import {
   PRODUCT_STATUS_VALUES,
+  PRODUCT_SOURCE_VALUES,
   type ProductStatus,
+  type ProductSourceType,
   ProductFormValues,
   ProductRecord,
 } from "./types";
@@ -48,6 +50,8 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
   );
   const [sizes, setSizes] = useState<string[]>(product.sizes);
   const [colors, setColors] = useState<string[]>(product.colors);
+  const [selectedStatuses, setSelectedStatuses] = useState<ProductStatus[]>(product.status ?? []);
+  const [sourceType, setSourceType] = useState<ProductSourceType>(product.source_type ?? "SUPPLIER");
   const [materials, setMaterials] = useState<string[]>(product.material);
   const sizeInputRef = useRef<HTMLInputElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
@@ -71,17 +75,11 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
     );
     (form.elements.namedItem("is_active") as HTMLInputElement | null)!.checked =
       Boolean(product.is_active);
-    (form.elements.namedItem("is_popular") as HTMLInputElement | null)!.checked =
-      Boolean(product.is_popular);
-    const statusInput = form.elements.namedItem("status") as
-      | HTMLSelectElement
-      | null;
-    if (statusInput) {
-      statusInput.value = product.status ?? "";
-    }
     setRegularPrice(product.regular_price);
     setSalePrice(product.sale_price ?? "");
     setMaterials(product.material);
+    setSelectedStatuses(product.status ?? []);
+    setSourceType(product.source_type ?? "SUPPLIER");
   }, [product]);
 
   const computedPercent = useMemo(() => {
@@ -125,6 +123,12 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       event.preventDefault();
       addOption(type, event.currentTarget.value);
     }
+  }
+
+  function toggleStatus(status: ProductStatus) {
+    setSelectedStatuses((prev) =>
+      prev.includes(status) ? prev.filter((item) => item !== status) : [...prev, status],
+    );
   }
 
   async function handleThumbnailChange(event: ChangeEvent<HTMLInputElement>) {
@@ -188,10 +192,7 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
 
-    const rawStatus = getValue("status");
-    const status = PRODUCT_STATUS_VALUES.includes(rawStatus as ProductStatus)
-      ? (rawStatus as ProductStatus)
-      : null;
+    const statuses = Array.from(new Set(selectedStatuses));
 
     const payload: ProductFormValues = {
       category_id: getValue("category_id"),
@@ -209,10 +210,10 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
       sizes,
       colors,
       material: materials,
+      source_type: sourceType,
       is_active: formData.get("is_active") !== null,
-      is_popular: formData.get("is_popular") !== null,
       priority: Number.parseInt(getValue("priority"), 10) || 0,
-      status,
+      status: statuses,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -329,18 +330,47 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Trạng thái
             </label>
-            <select
-              name="status"
-              defaultValue={product.status ?? ""}
-              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            >
-              <option value="">-- Chọn trạng thái --</option>
-              {PRODUCT_STATUS_VALUES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {selectedStatuses.length ? (
+                  selectedStatuses.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => toggleStatus(status)}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                    >
+                      {status}
+                      <span aria-hidden>×</span>
+                    </button>
+                  ))
+                ) : (
+                  <span className="text-xs text-dark-5 dark:text-dark-6">
+                    Chưa chọn trạng thái.
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {PRODUCT_STATUS_VALUES.map((status) => {
+                  const isSelected = selectedStatuses.includes(status);
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => toggleStatus(status)}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                        isSelected
+                          ? "border-primary bg-primary text-white"
+                          : "border-stroke text-dark hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white",
+                      )}
+                    >
+                      {status}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <InputGroup
             label="Mã sản phẩm"
@@ -406,12 +436,19 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
               className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
             />
           </div>
-          <HtmlEditor
-            name="content"
-            label="Nội dung HTML"
-            defaultValue={product.content}
-            required
-          />
+            <div className="space-y-6">
+              <label className="text-body-sm font-medium text-dark dark:text-white">
+                Nội dung
+              </label>
+              <textarea
+                name="content"
+                rows={4}
+                required
+                defaultValue={product.content}
+                className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
+              />
+            </div>
+
           <div className="space-y-6">
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Mô tả chi tiết
@@ -687,9 +724,25 @@ export function ProductUpdateForm({ product }: ProductUpdateFormProps) {
 
           <div className="space-y-2">
             <span className="text-sm font-medium text-dark dark:text-white">
-              Nổi bật
+              Loại nguồn hàng
             </span>
-            <Switch name="is_popular" withIcon defaultChecked={product.is_popular} />
+            <div className="flex flex-wrap gap-2">
+              {PRODUCT_SOURCE_VALUES.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSourceType(value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                    sourceType === value
+                      ? "border-primary bg-primary text-white"
+                      : "border-stroke text-dark hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white",
+                  )}
+                >
+                  {value === "IN_HOUSE" ? "Tự sản xuất" : "Nhà cung cấp"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

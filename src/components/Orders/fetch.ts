@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@/lib/env";
+
 import {
   OrderCustomer,
   OrderItem,
@@ -7,8 +9,7 @@ import {
   OrderStatus,
 } from "./types";
 
-const DEFAULT_ORDERS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/orders";
+const DEFAULT_ORDERS_ENDPOINT = buildApiUrl("api/orders");
 
 type OrderListApiResponse = {
   code?: number;

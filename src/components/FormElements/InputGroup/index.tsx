@@ -17,6 +17,7 @@ type InputGroupProps = {
   iconPosition?: "left" | "right";
   height?: "sm" | "default";
   defaultValue?: string | any;
+  suffix?: React.ReactNode;
 };
 
 const InputGroup: React.FC<InputGroupProps> = ({
@@ -29,6 +30,7 @@ const InputGroup: React.FC<InputGroupProps> = ({
   active,
   handleChange,
   icon,
+  suffix,
   ...props
 }) => {
   const id = useId();
@@ -65,6 +67,8 @@ const InputGroup: React.FC<InputGroupProps> = ({
               ? getFileStyles(props.fileStyleVariant!)
               : "px-5.5 py-3 text-dark placeholder:text-dark-6 dark:text-white",
             props.iconPosition === "left" && "pl-12.5",
+            props.iconPosition === "right" && "pr-12.5",
+            suffix && "pr-12.5",
             props.height === "sm" && "py-2.5",
           )}
           required={required}
@@ -73,6 +77,11 @@ const InputGroup: React.FC<InputGroupProps> = ({
         />
 
         {icon}
+        {suffix ? (
+          <div className="pointer-events-auto absolute right-4.5 top-1/2 -translate-y-1/2">
+            {suffix}
+          </div>
+        ) : null}
       </div>
     </div>
   );

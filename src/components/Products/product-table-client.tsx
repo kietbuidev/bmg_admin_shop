@@ -28,6 +28,7 @@ import {
 import {
   PRODUCT_STATUS_VALUES,
   type ProductStatus,
+  type ProductSourceType,
   type ProductListResponse,
   type ProductRecord,
 } from "./types";
@@ -40,18 +41,15 @@ import type { CategoryRecord } from "@/components/Categories/types";
 const BADGE_STYLES = {
   active: "bg-green-light-7 text-green-dark",
   inactive: "bg-gray-3 text-dark-5 dark:bg-dark-3 dark:text-dark-6",
-  popular: "bg-orange-light-4 text-orange-dark",
   default: "bg-gray-2 text-dark-5 dark:bg-dark-3 dark:text-dark-6",
 } as const;
 
 type BadgeVariant = keyof typeof BADGE_STYLES;
 
-const DESCRIPTION_LIMIT = 100;
-
-function truncate(text: string, limit = DESCRIPTION_LIMIT) {
-  if (text.length <= limit) return text;
-  return `${text.slice(0, limit).trimEnd()}…`;
-}
+const SOURCE_LABELS: Record<ProductSourceType, string> = {
+  IN_HOUSE: "Tự sản xuất",
+  SUPPLIER: "Nhà cung cấp",
+};
 
 type ProductTableClientProps = {
   initialData: ProductListResponse;
@@ -328,12 +326,14 @@ export function ProductTableClient({
                       <div className="text-xs uppercase tracking-wide text-dark-6 dark:text-dark-6">
                         Mã: {product.code}
                       </div>
-                      <p
-                        className="text-sm text-dark-5 dark:text-dark-6"
-                        title={product.short_description || product.description}
-                      >
-                        {truncate(product.short_description || product.description)}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs text-dark-5 dark:text-dark-6">
+                        <span className="font-semibold text-dark dark:text-white">Nguồn hàng:</span>
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary dark:bg-primary/20">
+                          {product.source_type
+                            ? SOURCE_LABELS[product.source_type]
+                            : "Chưa rõ"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </TableCell>
@@ -405,10 +405,6 @@ export function ProductTableClient({
                     <StatusBadge
                       label={product.is_active ? "Đang bán" : "Tạm ẩn"}
                       variant={product.is_active ? "active" : "inactive"}
-                    />
-                    <StatusBadge
-                      label={product.is_popular ? "Nổi bật" : "Thông thường"}
-                      variant={product.is_popular ? "popular" : "default"}
                     />
                   </div>
                 </TableCell>
@@ -485,8 +481,8 @@ function StatusBadge({
   );
 }
 
-function StatusPill({ status }: { status: string | null }) {
-  if (!status) {
+function StatusPill({ status }: { status: ProductStatus[] }) {
+  if (!status.length) {
     return (
       <span className="inline-flex items-center rounded-full bg-gray-2 px-2 py-0.5 text-xs font-semibold text-dark-5 dark:bg-dark-3 dark:text-dark-6">
         Chưa rõ
@@ -495,9 +491,16 @@ function StatusPill({ status }: { status: string | null }) {
   }
 
   return (
-    <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20">
-      {status}
-    </span>
+    <div className="flex flex-wrap gap-1">
+      {status.map((item) => (
+        <span
+          key={item}
+          className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-xs font-semibold text-primary dark:bg-primary/20"
+        >
+          {item}
+        </span>
+      ))}
+    </div>
   );
 }
 

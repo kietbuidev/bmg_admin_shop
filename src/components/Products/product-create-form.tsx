@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
+import type { ChangeEvent, FormEvent, KeyboardEvent } from "react";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
 
@@ -15,7 +15,9 @@ import { UploadResult, uploadImage } from "./media";
 import { ProductCategorySelect } from "./product-category-select";
 import {
   PRODUCT_STATUS_VALUES,
+  PRODUCT_SOURCE_VALUES,
   type ProductStatus,
+  type ProductSourceType,
   ProductFormValues,
 } from "./types";
 import { HtmlEditor } from "./html-editor";
@@ -37,10 +39,10 @@ export function ProductCreateForm() {
   const [galleryFiles, setGalleryFiles] = useState<UploadResult[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
   const [colors, setColors] = useState<string[]>([]);
-  const [materials, setMaterials] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<ProductStatus[]>([]);
+  const [sourceType, setSourceType] = useState<ProductSourceType>("SUPPLIER");
   const sizeInputRef = useRef<HTMLInputElement>(null);
   const colorInputRef = useRef<HTMLInputElement>(null);
-  const materialInputRef = useRef<HTMLInputElement>(null);
   const [regularPrice, setRegularPrice] = useState("");
   const [salePrice, setSalePrice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +50,7 @@ export function ProductCreateForm() {
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [result, setResult] = useState<ResultState | null>(null);
 
-  function addOption(type: "size" | "color" | "material", value?: string) {
+  function addOption(type: "size" | "color", value?: string) {
     const normalized = (value ?? "").trim().replace(/\s+/g, " ");
     if (!normalized) return;
 
@@ -58,26 +60,18 @@ export function ProductCreateForm() {
     } else if (type === "color") {
       setColors((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
       if (colorInputRef.current) colorInputRef.current.value = "";
-    } else {
-      setMaterials((prev) => (prev.includes(normalized) ? prev : [...prev, normalized]));
-      if (materialInputRef.current) materialInputRef.current.value = "";
     }
   }
 
-  function removeOption(type: "size" | "color" | "material", value: string) {
+  function removeOption(type: "size" | "color", value: string) {
     if (type === "size") {
       setSizes((prev) => prev.filter((item) => item !== value));
     } else if (type === "color") {
       setColors((prev) => prev.filter((item) => item !== value));
-    } else {
-      setMaterials((prev) => prev.filter((item) => item !== value));
     }
   }
 
-  function handleOptionKeyDown(
-    event: React.KeyboardEvent<HTMLInputElement>,
-    type: "size" | "color" | "material",
-  ) {
+  function handleOptionKeyDown(event: KeyboardEvent<HTMLInputElement>, type: "size" | "color") {
     if (event.key === "Enter") {
       event.preventDefault();
       addOption(type, event.currentTarget.value);
@@ -151,11 +145,7 @@ export function ProductCreateForm() {
 
     const formData = new FormData(form);
     const getValue = (key: string) => (formData.get(key) ?? "").toString().trim();
-
-    const rawStatus = getValue("status");
-    const status = PRODUCT_STATUS_VALUES.includes(rawStatus as ProductStatus)
-      ? (rawStatus as ProductStatus)
-      : null;
+    const statuses = Array.from(new Set(selectedStatuses));
 
     const payload: ProductFormValues = {
       category_id: getValue("category_id"),
@@ -172,11 +162,11 @@ export function ProductCreateForm() {
       currency: getValue("currency") || "VND",
       sizes,
       colors,
-      material: materials,
+      material: [],
+      source_type: sourceType,
       is_active: formData.get("is_active") !== null,
-      is_popular: formData.get("is_popular") !== null,
-      priority: Number.parseInt(getValue("priority"), 10) || 0,
-      status,
+      priority: 0,
+      status: statuses,
       meta_title: getValue("meta_title"),
       meta_keyword: getValue("meta_keyword"),
       meta_description: getValue("meta_description"),
@@ -231,7 +221,7 @@ export function ProductCreateForm() {
       setGalleryFiles([]);
       setSizes([]);
       setColors([]);
-      setMaterials([]);
+      setSelectedStatuses([]);
       setRegularPrice("");
       setSalePrice("");
     } catch (error) {
@@ -295,18 +285,53 @@ export function ProductCreateForm() {
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Trạng thái
             </label>
-            <select
-              name="status"
-              defaultValue=""
-              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            >
-              <option value="">-- Chọn trạng thái --</option>
-              {PRODUCT_STATUS_VALUES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {selectedStatuses.length ? (
+                  selectedStatuses.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() =>
+                        setSelectedStatuses((prev) => prev.filter((item) => item !== status))
+                      }
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+                    >
+                      {status}
+                      <span aria-hidden>×</span>
+                    </button>
+                  ))
+                ) : (
+                  <span className="text-xs text-dark-5 dark:text-dark-6">
+                    Chưa chọn trạng thái.
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {PRODUCT_STATUS_VALUES.map((status) => {
+                  const isSelected = selectedStatuses.includes(status);
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() =>
+                        setSelectedStatuses((prev) =>
+                          isSelected ? prev.filter((item) => item !== status) : [...prev, status],
+                        )
+                      }
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                        isSelected
+                          ? "border-primary bg-primary text-white"
+                          : "border-stroke text-dark hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white",
+                      )}
+                    >
+                      {status}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <InputGroup
             label="Mã sản phẩm"
@@ -315,6 +340,9 @@ export function ProductCreateForm() {
             type="text"
             required
           />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <InputGroup
             label="Giá gốc"
             name="regular_price"
@@ -326,9 +354,6 @@ export function ProductCreateForm() {
               setRegularPrice(event.target.value);
             }}
           />
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <InputGroup
             label="Giá giảm"
             name="sale_price"
@@ -355,14 +380,6 @@ export function ProductCreateForm() {
             type="text"
             defaultValue="VND"
           />
-          <InputGroup
-            label="Độ ưu tiên"
-            name="priority"
-            placeholder="5"
-            type="number"
-            defaultValue="0"
-            required
-          />
         </div>
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-1">
@@ -376,12 +393,23 @@ export function ProductCreateForm() {
               className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
             />
           </div>
-          <HtmlEditor
+          {/* <HtmlEditor
             name="content"
             label="Nội dung HTML"
             placeholder="<p>Mô tả chi tiết...</p>"
             required
-          />
+          /> */}
+          <div className="space-y-6">
+            <label className="text-body-sm font-medium text-dark dark:text-white">
+              Nội dung
+            </label>
+            <textarea
+              name="content"
+              rows={4}
+              required
+              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
+            />
+          </div>
           <div className="space-y-6">
             <label className="text-body-sm font-medium text-dark dark:text-white">
               Mô tả chi tiết
@@ -599,46 +627,6 @@ export function ProductCreateForm() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <label className="text-body-sm font-medium text-dark dark:text-white">
-              Chất liệu
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {materials.length ? (
-                materials.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => removeOption("material", item)}
-                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-                  >
-                    {item}
-                    <span aria-hidden>×</span>
-                  </button>
-                ))
-              ) : (
-                <span className="text-xs text-dark-5 dark:text-dark-6">
-                  Chưa thêm chất liệu.
-                </span>
-              )}
-            </div>
-            <div className="space-y-3">
-              <input
-                ref={materialInputRef}
-                type="text"
-                placeholder="Nhập chất liệu (Cotton, Linen...)"
-                onKeyDown={(event) => handleOptionKeyDown(event, "material")}
-                className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-              />
-              <button
-                type="button"
-                onClick={() => addOption("material", materialInputRef.current?.value)}
-                className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white sm:w-auto"
-              >
-                Thêm
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -656,9 +644,25 @@ export function ProductCreateForm() {
 
           <div className="space-y-2">
             <span className="text-sm font-medium text-dark dark:text-white">
-              Nổi bật
+              Loại nguồn hàng
             </span>
-            <Switch name="is_popular" withIcon />
+            <div className="flex flex-wrap gap-2">
+              {PRODUCT_SOURCE_VALUES.map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSourceType(value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                    sourceType === value
+                      ? "border-primary bg-primary text-white"
+                      : "border-stroke text-dark hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white",
+                  )}
+                >
+                  {value === "IN_HOUSE" ? "Tự sản xuất" : "Nhà cung cấp"}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -698,7 +702,8 @@ export function ProductCreateForm() {
             setGalleryFiles([]);
             setSizes([]);
             setColors([]);
-            setMaterials([]);
+            setSelectedStatuses([]);
+            setSourceType("SUPPLIER");
             setRegularPrice("");
             setSalePrice("");
           }}

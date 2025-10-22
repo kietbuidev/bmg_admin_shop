@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "@/lib/env";
+
 export async function getDevicesUsedData(
   timeFrame?: "monthly" | "yearly" | (string & {}),
 ) {
@@ -61,9 +63,7 @@ export type SystemCounterChart = {
 };
 
 const DEFAULT_ANALYTICS_BASE_URL =
-  process.env.NEXT_PUBLIC_ANALYTICS_BASE_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "https://bmgshop-production.up.railway.app";
+  process.env.NEXT_PUBLIC_ANALYTICS_BASE_URL ?? API_BASE_URL;
 
 export async function getPaymentsOverviewData(
   timeFrame?: "monthly" | "yearly" | (string & {}),

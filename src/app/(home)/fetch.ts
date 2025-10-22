@@ -1,13 +1,10 @@
 import { PRODUCT_STATUS_VALUES, type ProductStatus } from "@/components/Products/types";
+import { buildApiUrl } from "@/lib/env";
 
-const DEFAULT_ORDER_ANALYTICS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/analytics/orders";
-const DEFAULT_PRODUCT_ANALYTICS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/analytics/products";
-const DEFAULT_CONTACT_ANALYTICS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/analytics/contacts";
-const DEFAULT_POST_ANALYTICS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/analytics/posts";
+const DEFAULT_ORDER_ANALYTICS_ENDPOINT = buildApiUrl("api/analytics/orders");
+const DEFAULT_PRODUCT_ANALYTICS_ENDPOINT = buildApiUrl("api/analytics/products");
+const DEFAULT_CONTACT_ANALYTICS_ENDPOINT = buildApiUrl("api/analytics/contacts");
+const DEFAULT_POST_ANALYTICS_ENDPOINT = buildApiUrl("api/analytics/posts");
 
 type OrderAnalyticsResponse = {
   code?: number;

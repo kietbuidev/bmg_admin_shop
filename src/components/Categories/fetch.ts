@@ -1,7 +1,8 @@
+import { buildApiUrl } from "@/lib/env";
+
 import { CategoryFormValues, CategoryRecord } from "./types";
 
-const DEFAULT_CATEGORIES_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/categories";
+const DEFAULT_CATEGORIES_ENDPOINT = buildApiUrl("api/categories");
 
 export type CategoriesResponse = {
   rows: CategoryRecord[];

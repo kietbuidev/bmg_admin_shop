@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@/lib/env";
+
 import {
   PostFormPayload,
   PostFormValues,
@@ -5,8 +7,7 @@ import {
   PostRecord,
 } from "./types";
 
-const DEFAULT_POSTS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/posts";
+const DEFAULT_POSTS_ENDPOINT = buildApiUrl("api/posts");
 
 type PostListApiResponse = {
   code?: number;

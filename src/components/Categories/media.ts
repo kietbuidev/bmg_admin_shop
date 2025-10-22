@@ -1,3 +1,4 @@
+import { buildApiUrl } from "@/lib/env";
 import { sanitizeRemoteImageSrc } from "@/utils/safe-image";
 
 export type UploadResult = {
@@ -6,8 +7,7 @@ export type UploadResult = {
   previewUrl: string;
 };
 
-const DEFAULT_UPLOAD_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/system/upload-image";
+const DEFAULT_UPLOAD_ENDPOINT = buildApiUrl("api/system/upload-image");
 
 export async function uploadImage(file: File): Promise<UploadResult> {
   const endpoint =

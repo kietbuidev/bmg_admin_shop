@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-
 import { DotsVerticalIcon } from "@/assets/icons";
+import { buildApiUrl } from "@/lib/env";
 import {
   Dropdown,
   DropdownClose,
@@ -11,9 +9,10 @@ import {
   DropdownTrigger,
 } from "@/components/ui/dropdown";
 import { toast } from "react-hot-toast";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-const DEFAULT_CATEGORIES_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/categories";
+const DEFAULT_CATEGORIES_ENDPOINT = buildApiUrl("api/categories");
 
 type CategoryActionsProps = {
   categoryId: string;

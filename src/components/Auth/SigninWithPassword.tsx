@@ -1,6 +1,7 @@
 "use client";
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import { persistAuth } from "@/lib/auth";
+import { buildApiUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,8 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import InputGroup from "../FormElements/InputGroup";
 import { Checkbox } from "../FormElements/checkbox";
+
+const LOGIN_ENDPOINT = buildApiUrl("api/users/login");
 
 export default function SigninWithPassword() {
   const [data, setData] = useState({
@@ -17,6 +20,7 @@ export default function SigninWithPassword() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,20 +41,17 @@ export default function SigninWithPassword() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://bmgshop-production.up.railway.app"}/api/users/login`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            accept: "application/json",
-          },
-          body: JSON.stringify({
-            email: data.email,
-            password: data.password,
-          }),
+      const response = await fetch(LOGIN_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
         },
-      );
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
@@ -102,7 +103,7 @@ export default function SigninWithPassword() {
       />
 
       <InputGroup
-        type="password"
+        type={showPassword ? "text" : "password"}
         label="Password"
         className="mb-5 [&_input]:py-[15px]"
         placeholder="Enter your password"
@@ -110,6 +111,16 @@ export default function SigninWithPassword() {
         handleChange={handleChange}
         value={data.password}
         icon={<PasswordIcon />}
+        suffix={
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="text-xs font-semibold uppercase tracking-wide text-primary transition hover:text-primary/80 focus:outline-none"
+            aria-pressed={showPassword}
+          >
+            {showPassword ? "Ẩn" : "Hiện"}
+          </button>
+        }
       />
 
       <div className="mb-6 flex items-center justify-between gap-2 py-2 font-medium">

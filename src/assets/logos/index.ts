@@ -1,4 +1,4 @@
-export { default as dark } from './dark.svg'; 
+export { default as dark } from './dark.png'; 
 export { default as facebook } from './facebook.svg'; 
 export { default as github } from './github.svg'; 
 export { default as google } from './google.svg'; 

@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@/lib/env";
+
 import {
   PRODUCT_STATUS_VALUES,
   type ProductStatus,
@@ -6,10 +8,11 @@ import {
   ProductFormValues,
   ProductListResponse,
   ProductRecord,
+  PRODUCT_SOURCE_VALUES,
+  type ProductSourceType,
 } from "./types";
 
-const DEFAULT_PRODUCTS_ENDPOINT =
-  "https://bmgshop-production.up.railway.app/api/products";
+const DEFAULT_PRODUCTS_ENDPOINT = buildApiUrl("api/products");
 
 type ProductListApiResponse = {
   code?: number;
@@ -121,6 +124,30 @@ function toProductStatus(value: unknown): ProductStatus | null {
     : null;
 }
 
+function toProductStatusArray(value: unknown): ProductStatus[] {
+  if (Array.isArray(value)) {
+    const sanitized = new Set<ProductStatus>();
+    for (const item of value) {
+      const parsed = toProductStatus(item);
+      if (parsed) {
+        sanitized.add(parsed);
+      }
+    }
+    return Array.from(sanitized);
+  }
+
+  const parsed = toProductStatus(value);
+  return parsed ? [parsed] : [];
+}
+
+function toProductSourceType(value: unknown): ProductSourceType | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return PRODUCT_SOURCE_VALUES.includes(normalized as ProductSourceType)
+    ? (normalized as ProductSourceType)
+    : null;
+}
+
 function normalizeCategory(
   category: unknown,
 ): ProductCategorySummary | null {
@@ -166,9 +193,9 @@ function normalizeProductRecord(record: unknown): ProductRecord {
     material: toStringArray(raw.material),
     view_count: toStringValue(raw.view_count, "0"),
     is_active: toBoolean(raw.is_active),
-    is_popular: toBoolean(raw.is_popular),
     priority: toNumber(raw.priority, 0),
-    status: toProductStatus(raw.status),
+    source_type: toProductSourceType(raw.source_type),
+    status: toProductStatusArray(raw.status),
     meta_title: toStringValue(raw.meta_title),
     meta_keyword: toStringValue(raw.meta_keyword),
     meta_description: toStringValue(raw.meta_description),
@@ -302,7 +329,7 @@ export async function getProductDetail(id: string): Promise<ProductRecord> {
     throw new Error(data?.message ?? "Phản hồi sản phẩm không hợp lệ.");
   }
 
-  return data.data as ProductRecord;
+  return normalizeProductRecord(data.data);
 }
 
 export async function createProduct(
@@ -329,7 +356,7 @@ export async function createProduct(
     throw new Error(data?.message ?? "Phản hồi tạo sản phẩm không hợp lệ.");
   }
 
-  return data.data as ProductRecord;
+  return normalizeProductRecord(data.data);
 }
 
 export async function updateProduct(
@@ -357,14 +384,15 @@ export async function updateProduct(
     throw new Error(data?.message ?? "Phản hồi cập nhật sản phẩm không hợp lệ.");
   }
 
-  return data.data as ProductRecord;
+  return normalizeProductRecord(data.data);
 }
 
 function normalizePayload(payload: ProductFormValues): ProductFormPayload {
   const regular = Number.parseFloat(payload.regular_price || "0");
   const sale = Number.parseFloat(payload.sale_price || "0");
   let percent: string | null = payload.percent;
-  const status = toProductStatus(payload.status);
+  const status = toProductStatusArray(payload.status);
+  const sourceType = toProductSourceType(payload.source_type) ?? "SUPPLIER";
   const material = Array.from(
     new Set(
       (payload.material ?? [])
@@ -380,6 +408,7 @@ function normalizePayload(payload: ProductFormValues): ProductFormPayload {
   return {
     ...payload,
     status,
+    source_type: sourceType,
     percent,
     material,
   };
