@@ -402,9 +402,6 @@ function OrderSummary({ order }: { order: OrderRecord }) {
         <div className="text-base font-semibold text-dark dark:text-white">
           {order.order_code || "Chưa có mã"}
         </div>
-        <div className="text-xs text-dark-6 dark:text-dark-6">
-          ID: {order.id || "--"}
-        </div>
       </div>
 
       <div className="inline-flex items-center gap-2 rounded-md bg-gray-2 px-3 py-1 text-xs font-semibold text-dark-6 dark:bg-dark-3 dark:text-dark-6">

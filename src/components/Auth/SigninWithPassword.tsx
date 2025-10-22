@@ -1,6 +1,6 @@
 "use client";
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
-import { persistAuth } from "@/lib/auth";
+import { decodeJwtPayload, persistAuth } from "@/lib/auth";
 import { buildApiUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -69,6 +69,17 @@ export default function SigninWithPassword() {
         throw new Error("Login response is missing tokens");
       }
 
+      const payload = decodeJwtPayload(tokens.access_token);
+      const roles = Array.isArray(payload?.roles)
+        ? payload?.roles.filter((item): item is string => typeof item === "string")
+        : [];
+      const hasAdminRole = roles.some((role) => role.toLowerCase() === "admin");
+      const isAdminFlag = payload?.is_admin === true;
+
+      if (!hasAdminRole && !isAdminFlag) {
+        throw new Error("Tài khoản không có quyền quản trị.");
+      }
+
       persistAuth({
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -110,7 +121,7 @@ export default function SigninWithPassword() {
         name="password"
         handleChange={handleChange}
         value={data.password}
-        icon={<PasswordIcon />}
+        // icon={<PasswordIcon />}
         suffix={
           <button
             type="button"

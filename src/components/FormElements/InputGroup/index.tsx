@@ -34,6 +34,10 @@ const InputGroup: React.FC<InputGroupProps> = ({
   ...props
 }) => {
   const id = useId();
+  const iconPosition = props.iconPosition ?? "right";
+  const hasLeftIcon = Boolean(icon) && iconPosition === "left";
+  const hasRightIcon = Boolean(icon) && iconPosition !== "left";
+  const hasTrailingContent = Boolean(suffix) || hasRightIcon;
 
   return (
     <div className={className}>
@@ -47,10 +51,7 @@ const InputGroup: React.FC<InputGroupProps> = ({
 
       <div
         className={cn(
-          "relative mt-3 [&_svg]:absolute [&_svg]:top-1/2 [&_svg]:-translate-y-1/2",
-          props.iconPosition === "left"
-            ? "[&_svg]:left-4.5"
-            : "[&_svg]:right-4.5",
+          "relative mt-3",
         )}
       >
         <input
@@ -66,9 +67,8 @@ const InputGroup: React.FC<InputGroupProps> = ({
             type === "file"
               ? getFileStyles(props.fileStyleVariant!)
               : "px-5.5 py-3 text-dark placeholder:text-dark-6 dark:text-white",
-            props.iconPosition === "left" && "pl-12.5",
-            props.iconPosition === "right" && "pr-12.5",
-            suffix && "pr-12.5",
+            hasLeftIcon && "pl-12.5",
+            hasTrailingContent && "pr-12.5",
             props.height === "sm" && "py-2.5",
           )}
           required={required}
@@ -76,9 +76,22 @@ const InputGroup: React.FC<InputGroupProps> = ({
           data-active={active}
         />
 
-        {icon}
-        {suffix ? (
-          <div className="pointer-events-auto absolute right-4.5 top-1/2 -translate-y-1/2">
+        {hasLeftIcon ? (
+          <span className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2">
+            {icon}
+          </span>
+        ) : null}
+
+        {hasTrailingContent ? (
+          <div
+            className={cn(
+              "absolute right-4.5 top-1/2 -translate-y-1/2",
+              suffix ? "pointer-events-auto flex items-center gap-2" : "pointer-events-none",
+            )}
+          >
+            {hasRightIcon ? (
+              <span className={suffix ? "pointer-events-none" : undefined}>{icon}</span>
+            ) : null}
             {suffix}
           </div>
         ) : null}

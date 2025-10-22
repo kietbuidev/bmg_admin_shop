@@ -38,7 +38,9 @@ function emitAuthChange(detail?: { user?: AuthUser } | null) {
   );
 }
 
-function decodeJwtPayload(token: string): JwtPayload | null {
+export type AuthJwtPayload = JwtPayload;
+
+export function decodeJwtPayload(token: string): JwtPayload | null {
   const parts = token.split(".");
 
   if (parts.length !== 3) {
