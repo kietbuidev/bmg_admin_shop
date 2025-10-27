@@ -106,14 +106,12 @@ export function getStoredAuth(): AuthPayload | null {
   }
 
   const raw = localStorage.getItem(STORAGE_KEY);
-
   if (!raw) {
     return null;
   }
 
   try {
     const parsed = JSON.parse(raw) as AuthPayload;
-
     if (parsed.accessToken) {
       return {
         accessToken: parsed.accessToken,
@@ -135,4 +133,13 @@ export function clearAuth() {
 
   localStorage.removeItem(STORAGE_KEY);
   emitAuthChange(null);
+}
+
+export function getAccessToken(): string | null {
+  if (!isBrowser()) {
+    return null;
+  }
+  
+  const auth = getStoredAuth();
+  return auth?.accessToken ?? null;
 }

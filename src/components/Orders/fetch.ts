@@ -1,4 +1,5 @@
 import { buildApiUrl } from "@/lib/env";
+import { getAccessToken } from "@/lib/auth";
 
 import {
   OrderCustomer,
@@ -202,17 +203,20 @@ export async function getOrders({
     url.searchParams.set("search", normalizedSearch);
   }
 
+  const token = getAccessToken();
+  console.log(token);
+  const headers: HeadersInit = {
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
   const response = await fetch(url.toString(), {
-    headers: {
-      Accept: "application/json",
-    },
+    headers,
     cache: "no-store",
     signal,
   });
-
-  if (!response.ok) {
-    throw new Error("Không thể tải danh sách đơn hàng.");
-  }
 
   const data = (await response.json()) as OrderListApiResponse | null;
 
@@ -220,11 +224,8 @@ export async function getOrders({
     throw new Error("Phản hồi đơn hàng không hợp lệ.");
   }
 
-  if (
-    data.code !== undefined &&
-    data.code !== 200 &&
-    data.code !== 201
-  ) {
+  // Kiểm tra code trong response body
+  if (data.code !== undefined && data.code !== 200 && data.code !== 201) {
     throw new Error(data.message ?? "Máy chủ trả về lỗi khi tải đơn hàng.");
   }
 
@@ -263,18 +264,21 @@ export async function updateOrderStatus(
   const endpoint = resolveOrdersEndpoint();
   const statusUrl = `${endpoint}/${id}/status`;
 
+  const token = getAccessToken();
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(statusUrl, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers,
     body: JSON.stringify({ status }),
   });
-
-  if (!response.ok) {
-    throw new Error("Không thể cập nhật trạng thái đơn hàng.");
-  }
 
   const data = (await response.json()) as OrderStatusUpdateApiResponse | null;
 
@@ -282,11 +286,8 @@ export async function updateOrderStatus(
     throw new Error("Phản hồi cập nhật đơn hàng không hợp lệ.");
   }
 
-  if (
-    data.code !== undefined &&
-    data.code !== 200 &&
-    data.code !== 201
-  ) {
+  // Kiểm tra code trong response body
+  if (data.code !== undefined && data.code !== 200 && data.code !== 201) {
     throw new Error(data.message ?? "Máy chủ trả về lỗi khi cập nhật đơn hàng.");
   }
 
