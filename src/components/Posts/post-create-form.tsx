@@ -13,7 +13,7 @@ import { toast } from "react-hot-toast";
 
 import InputGroup from "@/components/FormElements/InputGroup";
 import { Switch } from "@/components/FormElements/switch";
-import { HtmlEditor } from "@/components/Products/html-editor";
+import { LexicalEditor } from "./lexical-editor";
 import { SafeImage } from "@/components/ui/safe-image";
 import { cn } from "@/lib/utils";
 
@@ -248,28 +248,23 @@ export function PostCreateForm() {
           />
         </div>
 
-        <div className="space-y-3">
-          <label className="text-body-sm font-medium text-dark dark:text-white">
-            Mô tả
-          </label>
-          <textarea
-            name="post_description"
-            rows={4}
-            required
-            className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            placeholder="Mô tả tóm tắt nội dung bài viết"
-          />
-        </div>
+        <LexicalEditor
+          name="post_description"
+          label="Mô tả"
+          placeholder="Mô tả tóm tắt nội dung bài viết"
+          required
+          minHeight={220}
+        />
       </section>
 
       <section className="space-y-5">
         <h3 className="text-base font-semibold text-dark dark:text-white">
           Nội dung chi tiết
         </h3>
-        <HtmlEditor
+        <LexicalEditor
           name="content"
-          label="Nội dung HTML"
-          placeholder="<p>Nội dung bài viết...</p>"
+          label="Nội dung"
+          placeholder="Nhập nội dung bài viết..."
           required
         />
       </section>

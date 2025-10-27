@@ -20,7 +20,7 @@ import {
   type ProductSourceType,
   ProductFormValues,
 } from "./types";
-import { HtmlEditor } from "./html-editor";
+import { LexicalEditor } from "@/components/Posts/lexical-editor";
 
 const messageStyles = {
   success:
@@ -382,45 +382,27 @@ export function ProductCreateForm() {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-1">
-          <div className="space-y-6">
-            <label className="text-body-sm font-medium text-dark dark:text-white">
-              Mô tả ngắn
-            </label>
-            <textarea
-              name="short_description"
-              rows={4}
-              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            />
-          </div>
-          {/* <HtmlEditor
-            name="content"
-            label="Nội dung HTML"
-            placeholder="<p>Mô tả chi tiết...</p>"
+        <div className="space-y-6">
+          <LexicalEditor
+            name="short_description"
+            label="Mô tả ngắn"
+            placeholder="Nhập mô tả ngắn gọn về sản phẩm"
+            minHeight={200}
+          />
+          <LexicalEditor
+            name="description"
+            label="Mô tả chi tiết"
+            placeholder="Nhập mô tả chi tiết cho sản phẩm"
             required
-          /> */}
-          <div className="space-y-6">
-            <label className="text-body-sm font-medium text-dark dark:text-white">
-              Nội dung
-            </label>
-            <textarea
-              name="content"
-              rows={4}
-              required
-              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            />
-          </div>
-          <div className="space-y-6">
-            <label className="text-body-sm font-medium text-dark dark:text-white">
-              Mô tả chi tiết
-            </label>
-            <textarea
-              name="description"
-              rows={4}
-              required
-              className="w-full rounded-lg border-[1.5px] border-stroke bg-transparent px-5.5 py-3 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white dark:focus:border-primary"
-            />
-          </div>
+            minHeight={260}
+          />
+          <LexicalEditor
+            name="content"
+            label="Nội dung"
+            placeholder="Nhập nội dung bài viết sản phẩm..."
+            required
+            minHeight={320}
+          />
         </div>
       </section>
 
